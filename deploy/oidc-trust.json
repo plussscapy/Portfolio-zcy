@@ -3,7 +3,7 @@
   "Statement": [
     {
       "Effect": "Allow",
-      "Action": "sts:AssumeRoleWithOIDC",
+      "Action": "sts:AssumeRole",
       "Principal": {
         "Federated": ["acs:ram::1367092162747008:oidc-provider/github-portfolio-zcy"]
       },
@@ -11,7 +11,7 @@
         "StringEquals": {
           "oidc:iss": "https://token.actions.githubusercontent.com",
           "oidc:aud": "sts.aliyuncs.com",
-          "oidc:sub": "repo:plussscapy/Portfolio-zcy:ref:refs/heads/main"
+          "oidc:sub": "repo:plussscapy@185015200/Portfolio-zcy@1442404977:ref:refs/heads/main"
         }
       }
     }
