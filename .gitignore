@@ -1,0 +1,14 @@
+node_modules/
+dist/
+.netlify/
+.env
+.env.*
+!.env.example
+.DS_Store
+*.log
+*.tsbuildinfo
+*.blend
+*.blend[0-9]*
+preview-evidence/
+*.zip
+*.tar.gz

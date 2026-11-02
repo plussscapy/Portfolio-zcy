@@ -1,0 +1,25 @@
+{
+  "shelf": {
+    "centerX": 0,
+    "centerZ": 0.24,
+    "width": 3.18,
+    "depth": 0.62,
+    "thickness": 0.075,
+    "upperY": 2.62,
+    "lowerY": 1.7,
+    "headerBottomY": 3.61,
+    "backboardFrontZ": 0.11
+  },
+  "box": {
+    "width": 1.04,
+    "bodyHeight": 0.66,
+    "lidHeight": 0.09,
+    "depth": 0.34,
+    "lidOverhang": 0.012,
+    "centerZ": 0.3,
+    "leftX": -0.75,
+    "rightX": 0.72
+  },
+  "frontCrop": { "x0": 125, "y0": 360, "x1": 1237, "y1": 1083 },
+  "imageSize": { "width": 1358, "height": 1159 }
+}

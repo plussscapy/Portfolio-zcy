@@ -1,0 +1,7 @@
+* text=auto
+*.png binary
+*.mp3 binary
+*.glb binary
+*.pdf binary
+*.wasm binary
+*.cur binary

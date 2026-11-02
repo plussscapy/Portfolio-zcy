@@ -1,0 +1,24 @@
+html.glove-preview-active { --glove-current: var(--glove-default); }
+html.glove-preview-active[data-glove-pose='hover'] { --glove-current: var(--glove-hover); }
+html.glove-preview-active[data-glove-pose='click'] { --glove-current: var(--glove-click); }
+html.glove-preview-active, .glove-preview-active body, .glove-preview-active body *, .glove-preview-active body *::before, .glove-preview-active body *::after, .glove-preview-active ::backdrop { cursor: var(--glove-current) !important; }
+.glove-preview-panel { position: fixed; z-index: 110; left: 22px; bottom: 22px; width: 326px; padding: 18px; border: 1px solid rgba(23,49,47,.14); border-radius: 20px; background: rgba(255,253,243,.97); color: #17312f; box-shadow: 0 12px 40px #17312f22; font-family: Arial,'PingFang SC',sans-serif; }
+.glove-preview-panel header { display: flex; align-items: center; justify-content: space-between; }
+.glove-preview-panel header small { display: block; font-size: 9px; letter-spacing: .13em; color: #6c8580; margin-bottom: 7px; }
+.glove-preview-panel header strong { font-size: 17px; }
+.glove-preview-panel header strong span { margin-left: 8px; color: #4b8dab; font-size: 10px; font-weight: 500; }
+.glove-preview-panel button { border: 0; background: transparent; padding: 0; }
+.glove-preview-panel button:focus-visible { outline: 2px solid #5ba8ca; outline-offset: 3px; }
+.glove-preview-panel header > button { width: 32px; height: 32px; font-size: 22px; border-radius: 50%; background: #eaf0e9; }
+.glove-preview-panel p { font-size: 11px; line-height: 1.6; color: #6c7c72; margin: 12px 0; }
+.glove-preview-poses { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.glove-preview-poses button { display: flex; flex-direction: column; align-items: center; border: 1px solid #e3e5d9; border-radius: 12px; padding: 10px 2px; background: #f5f3e9; }
+.glove-preview-poses button:hover { border-color: #5ba8ca; background: #ecf4f3; }
+.glove-preview-poses img { width: 60px; height: 60px; object-fit: contain; margin-bottom: 7px; }
+.glove-preview-poses strong { font-size: 11px; }
+.glove-preview-poses small { font-size: 9px; color: #7c8578; margin-top: 4px; }
+.glove-preview-panel footer { display: flex; justify-content: space-between; align-items: center; margin-top: 14px; gap: 10px; }
+.glove-preview-fixed-size { font-size: 10px; color: #4b8dab; }
+.glove-preview-toggle { font-size: 10px; text-decoration: underline; text-underline-offset: 3px; }
+.glove-preview-panel.is-collapsed { width: 225px; padding: 14px 18px; }
+@media (max-width: 600px), (pointer: coarse) { .glove-preview-panel { display: none; } }

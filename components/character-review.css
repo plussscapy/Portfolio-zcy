@@ -1,0 +1,19 @@
+.character-review{min-height:100dvh;background:#12232d;color:#edf0ef;padding:30px clamp(20px,4vw,64px);font-family:Arial,"PingFang SC",sans-serif}
+.character-review-header{display:flex;align-items:center;justify-content:space-between;gap:20px;margin-bottom:28px}
+.character-review-header p{font-size:10px;letter-spacing:.2em;color:#8ea8b8;margin:0 0 9px}
+.character-review-header h1{font-size:25px;font-weight:500;letter-spacing:.05em;margin:0}
+.character-review-header a{color:#bcccd4;font-size:13px;text-decoration:none}
+.character-review-toolbar{display:flex;justify-content:space-between;gap:20px;align-items:center;margin-bottom:20px}
+.character-review-tabs{display:flex;gap:7px;flex-wrap:wrap}
+.character-review button{border:1px solid #38505e;border-radius:7px;background:transparent;color:#b3c3ce;font-size:13px;padding:9px 15px;cursor:pointer}
+.character-review button[aria-pressed=true]{background:#d4e1df;color:#142a34;border-color:#d4e1df}
+.character-review button:focus-visible,.character-review a:focus-visible{outline:2px solid #b8deda;outline-offset:4px}
+.character-review-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.character-review-panel{border:1px solid #334956;border-radius:12px;overflow:hidden;background:#1b2f3b}
+.character-review-panel h2{height:50px;margin:0;padding:0 20px;display:flex;align-items:center;gap:12px;font-size:13px;font-weight:400;border-bottom:1px solid #334956}
+.character-review-panel h2 span{color:#829caa;font-size:11px}
+.character-review-panel small{font-size:10px;color:#8ea8b8;margin-left:auto}
+.character-review-visual{height:min(69vw,680px);min-height:340px;display:flex;justify-content:center;align-items:center;overflow:hidden}
+.character-review-visual svg,.character-review-visual img{width:100%;height:100%;object-fit:contain;display:block}
+.character-review footer{color:#8ea8b8;font-size:12px;line-height:1.7;padding:18px 0 0}
+@media(max-width:680px){.character-review{padding:20px 14px}.character-review-header h1{font-size:21px}.character-review-toolbar{align-items:flex-start;flex-direction:column;gap:12px}.character-review-grid{gap:8px}.character-review-panel h2{padding:0 9px;gap:6px;font-size:11px}.character-review-panel small{display:none}.character-review-visual{min-height:260px;height:70vw}.character-review button{padding:8px 11px}}
