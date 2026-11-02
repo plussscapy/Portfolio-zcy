@@ -1,0 +1,47 @@
+name: Deploy to Alibaba Cloud OSS
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: aliyun-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Check out source
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - name: Set up Node.js
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Install and build
+        run: |
+          npm ci --no-audit --no-fund
+          npm run build
+          python3 scripts/deploy_oss.py --dry-run
+      - name: Install Alibaba Cloud OSS SDK
+        run: python3 -m pip install --disable-pip-version-check oss2==2.19.1
+      - name: Get temporary Alibaba Cloud credentials
+        uses: aliyun/configure-aliyun-credentials-action@1e5248c8d5d93a8781ac344a68e19a43341e79e6 # v1
+        with:
+          oidc-provider-arn: acs:ram::1367092162747008:oidc-provider/github-portfolio-zcy
+          role-to-assume: acs:ram::1367092162747008:role/github-portfolio-zcy-deploy
+          audience: sts.aliyuncs.com
+          role-session-name: portfolio-${{ github.run_id }}
+          role-session-expiration: 1800
+      - name: Publish and verify website
+        run: python3 scripts/deploy_oss.py

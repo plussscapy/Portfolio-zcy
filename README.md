@@ -47,7 +47,11 @@ npm run preview
 
 ## 发布到阿里云
 
-当前仓库用于保存源码；上传 GitHub 本身不会更新线上网站。后续可配置 GitHub Actions，在提交后自动构建并上传到现有 OSS 空间。
+自动发布配置位于 `.github/workflows/deploy-aliyun.yml`：推送到 `main` 分支，或在 GitHub Actions 中手动运行 **Deploy to Alibaba Cloud OSS**，会安装依赖、构建网站、上传运行文件并验证线上首页和版本标记。
+
+发布使用 GitHub OIDC 与阿里云 RAM 临时身份，无需保存长期 AccessKey。仅 `plussscapy/Portfolio-zcy` 的 `main` 分支可承担发布角色；权限仅为当前网站 OSS 对象的读取与写入。具体权限与信任条件保存在 `deploy/oss-policy.json`、`deploy/oidc-trust.json`。
+
+发布先上传资源，再更新首页和 `_deployment.json` 版本标记。旧哈希资源会保留，避免已经打开的页面受影响。构建失败不会更新网站；上传失败会在 Actions 中显示失败原因，修复后可重新运行。若需要恢复历史版本，可在对应历史成功发布记录中重新运行任务。
 
 手动发布步骤：
 
@@ -57,7 +61,7 @@ npm run preview
 4. 保持首页和错误文档均为 `index.html`，错误文档响应码为 `200`，以支持直接打开 `/character-review`。
 5. 验证首页、进店与返回、作品详情、音乐及简历下载。
 
-自动部署所需的阿里云凭据应通过 GitHub Actions Secrets 配置，并只授权网站空间所需权限。
+自动发布记录：[GitHub Actions](https://github.com/plussscapy/Portfolio-zcy/actions)。公开版本标记：`https://zhouchengyi.art/_deployment.json`。RAM 角色、身份提供商和权限策略的名称见工作流及 `deploy/` 配置；修改仓库名称或默认分支时，需同步更新信任条件。
 
 ## 仓库范围
 

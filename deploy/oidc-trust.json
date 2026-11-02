@@ -1,0 +1,19 @@
+{
+  "Version": "1",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": "sts:AssumeRoleWithOIDC",
+      "Principal": {
+        "Federated": ["acs:ram::1367092162747008:oidc-provider/github-portfolio-zcy"]
+      },
+      "Condition": {
+        "StringEquals": {
+          "oidc:iss": "https://token.actions.githubusercontent.com",
+          "oidc:aud": "sts.aliyuncs.com",
+          "oidc:sub": "repo:plussscapy/Portfolio-zcy:ref:refs/heads/main"
+        }
+      }
+    }
+  ]
+}
