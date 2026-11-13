@@ -1,0 +1,37 @@
+.work-image-modal { --work-margin:36px; width:100%; height:100dvh; max-width:none; max-height:none; margin:0; border:0; color:#193a34; font-family:Arial,"PingFang SC","Microsoft YaHei",sans-serif; }
+.work-image-modal:not([open]) { display:none; }
+.work-image-modal::backdrop { background:transparent; }
+.work-image-modal .work-image-mobile-close { display:none; }
+/* The original stage, packaging card, sheet dimensions and opening animation
+   stay in globals.css. Only the contents of that sheet change here. */
+.project-sheet.work-image-panel { position:relative; overflow:hidden; scroll-snap-type:none; }
+.work-image-scroll { height:100%; width:100%; overflow-y:auto; overscroll-behavior:contain; scrollbar-width:none; }
+.work-image-scroll::-webkit-scrollbar { display:none; }
+.work-image-gallery { margin:36px var(--work-margin) 0; }
+.work-image-gallery img { display:block; width:100%; height:auto; margin:0; cursor:zoom-in; }
+.work-image-gallery img:first-child { border-top-left-radius:8px; border-top-right-radius:8px; }
+.work-image-gallery img:last-child { border-bottom-left-radius:8px; border-bottom-right-radius:8px; }
+.work-image-reading { position:absolute; right:0; top:50%; transform:translateY(-50%); width:var(--work-margin); display:flex; flex-direction:column; align-items:center; gap:12px; pointer-events:none; font:11px/1 Arial,sans-serif; font-variant-numeric:tabular-nums; }
+.work-image-reading i { display:block; width:2px; height:100px; background:#193a3426; }
+.work-image-reading i::after { content:""; display:block; width:100%; height:var(--read-progress,0%); background:#193a34; }
+.work-image-modal :focus-visible { outline:2px solid #b84c2b; outline-offset:3px; }
+.work-image-modal .work-image-desktop-close:focus-visible { outline:none; }
+.work-image-modal .work-image-desktop-close:focus-visible svg { stroke-width:3; }
+.work-image-gallery img:focus-visible { outline-offset:-3px; }
+.work-image-scroll:focus-visible { outline-offset:-2px; }
+.work-image-empty { min-height:60vh; display:grid; place-items:center; }
+.work-image-original { padding:0; border:0; max-width:96vw; max-height:96dvh; overflow:auto; background:#f7f6f0; }
+.work-image-original::backdrop { background:#12251ef0; }
+.work-image-original img { display:block; max-width:none; }
+.work-image-original button { position:fixed; top:16px; right:16px; display:grid; place-items:center; width:44px; height:44px; padding:0; border:0; border-radius:50%; background:white; color:#193a34; cursor:pointer; box-shadow:0 2px 12px #0002; }
+@media(max-width:767px) {
+  .work-image-modal { --work-margin:24px; }
+  .work-image-modal > .work-image-desktop-close { display:none; }
+  .work-image-modal .work-image-mobile-close { display:grid; top:20px; right:24px; width:44px; height:44px; border:0; border-radius:50%; background:#edf0e9; color:#193a34; box-shadow:none; outline:none; }
+  .work-image-modal .work-image-mobile-close:focus-visible { outline:none; }
+  .work-image-modal .work-image-mobile-close:focus-visible svg { stroke-width:3; }
+  .work-image-modal .project-sheet.work-image-panel { transform:translateY(100%); opacity:0; transition:transform .66s cubic-bezier(.16,.82,.2,1), opacity .55s ease; }
+  .work-image-modal .is-open .project-sheet.work-image-panel { transform:translateY(0); opacity:1; }
+  /* Leave room for the original close button above the image sequence. */
+  .work-image-gallery { margin-top:88px; }
+}

@@ -24,7 +24,10 @@ npm run preview
 
 | 路径 | 内容 |
 | --- | --- |
-| `app/page.tsx` | 作品集页面、作品内容、音乐与页面交互 |
+| `app/page.tsx` | 作品集页面、音乐与页面交互 |
+| `lib/projects.json` | 作品入口信息及按顺序展示的图片清单 |
+| `components/ProjectImageViewer.tsx` | 图片作品详情、原图查看及竖向阅读进度 |
+| `components/project-image-viewer.css` | 图片详情边距、首尾圆角及响应式样式 |
 | `app/globals.css` | 页面样式与响应式布局 |
 | `components/RainyStoreScene.tsx` | Three.js 便利店场景 |
 | `components/CharacterReview.tsx` | `/character-review` 店员形象对照页 |
@@ -39,7 +42,10 @@ npm run preview
 
 ## 更新内容
 
-- 修改作品文字：`app/page.tsx` 中的 `projects`。
+- 修改作品入口及详情图片顺序：`lib/projects.json`。每件作品的 `images` 数组按展示顺序排列，数量不限；每张图片有稳定的 `id`、原图路径、尺寸和说明文字。
+- 当前四个作品暂共用 AFTER HOURS 概念示例，每个入口展示 20 张；内容由 5 张原始 PNG 组成并重复排列，仅用于样式验证。原图位于 `public/projects/after-hours/`，没有转换格式或重新压缩。替换真实作品时按实际图片填写清单；支持不同高度的长图。
+- 作品仍按原来的包装卡片 → 展开弹窗面板方式显示，保留背景遮罩、面板尺寸、开启动画和关闭后返回店内的逻辑。只将面板内部替换为图片详情，保持上下滚动；电脑端在面板内左右 36px，手机端（宽度不超过 767px）左右 24px；首图上角、尾图下角各 8px 圆角。右侧显示当前页、100px 竖向进度线和总页数。
+- 本地可直接打开 `/project-preview` 检查同一个作品详情组件，附加 `?project=project-2` 等参数可选择作品；关闭后返回便利店。测试版的选图工具没有接入正式访客界面，后台上传与发布尚未实现。
 - 修改作品封面：`public/project-gift-front-01.png` 至 `04.png`。
 - 更新简历：替换 `public/zhou-chengyi-resume.pdf`。
 - 修改场景、动画：`components/RainyStoreScene.tsx`。

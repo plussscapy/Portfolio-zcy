@@ -5,12 +5,16 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
 import { ReactNode, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
+import { RefinedAsset } from "./RefinedStoreAssets";
+import { MatteWall } from "./MatteWall";
+import { WinterSnowbanks } from "./WinterSnowbanks";
+import { StoreLighting } from "./StoreLighting";
 import giftLayout from "../lib/gift-box-layout.json";
+import type { Project } from "../lib/projects";
 import { advanceEntryTime, createEntryPath, entryDistanceAtTime, ENTRY_END, ENTRY_LOOK_END, interiorCameraPosition, makeEntryTiming, smoothRange } from "../lib/entry-path";
 
 type Mode = "outside" | "entering" | "inside";
 type Season = "spring" | "summer" | "autumn" | "winter";
-type Project = { id: string; number: string; color: string; ink: string; title: string; subtitle: string; intro: string; role: string; challenge: string; process: string[]; results: string[] };
 type Props = { mode: Mode; season: Season; resetViewKey: number; preloadStage: 0 | 1 | 2; onEnter: () => void; onViewReset: () => boolean; onEntered: () => void; onLightningFlash: () => void; onSelect: (project: Project) => void; onCheckout: () => void; onProfile: () => void; projects: Project[] };
 
 const navy = "#152b38";
@@ -614,73 +618,6 @@ function WinterSnowflakes({ active, compact }: { active: boolean; compact: boole
   </instancedMesh>;
 }
 
-function SnowCap({ position, size, material }: { position: [number, number, number]; size: [number, number, number]; material: THREE.Material }) {
-  const geometry = useMemo(() => new RoundedBoxGeometry(size[0], size[1], size[2], 4, Math.min(size[1] * 0.48, size[2] * 0.42, 0.055)), [size[0], size[1], size[2]]);
-  useEffect(() => () => geometry.dispose(), [geometry]);
-  return <mesh position={position} geometry={geometry} material={material} receiveShadow />;
-}
-
-function WinterSnowCover({ active }: { active: boolean }) {
-  const texture = useMemo(() => {
-    const canvas = document.createElement("canvas");
-    canvas.width = canvas.height = 128;
-    const ctx = canvas.getContext("2d")!;
-    ctx.fillStyle = "#f4f8fb";
-    ctx.fillRect(0, 0, 128, 128);
-    for (let i = 0; i < 420; i++) {
-      const x = (i * 83.17) % 128;
-      const y = (i * 47.71) % 128;
-      ctx.fillStyle = i % 3 ? "rgba(167,190,206,0.13)" : "rgba(255,255,255,0.7)";
-      ctx.fillRect(x, y, i % 5 ? 1 : 2, i % 5 ? 1 : 2);
-    }
-    const map = new THREE.CanvasTexture(canvas);
-    map.colorSpace = THREE.SRGBColorSpace;
-    return map;
-  }, []);
-  const material = useMemo(() => new THREE.MeshStandardMaterial({ map: texture, roughness: 0.98, metalness: 0, emissive: new THREE.Color("#566b80"), emissiveIntensity: 0.08 }), [texture]);
-  useEffect(() => () => { material.dispose(); texture.dispose(); }, [material, texture]);
-  return <group visible={active}>
-    {/* Thin, rounded layers follow existing exterior surfaces; no prop geometry is changed. */}
-    {/* The two raised sidewalks top out at y=0.10; these caps sink slightly into them. */}
-    <SnowCap position={[-6.75, 0.124, -0.25]} size={[3.76, 0.054, 10.76]} material={material} />
-    <SnowCap position={[6.7, 0.124, -0.25]} size={[3.84, 0.054, 10.76]} material={material} />
-    <SnowCap position={[0, 5.857, -0.47]} size={[8.72, 0.074, 6.9]} material={material} />
-    {[[-3.2, -2.15, 1.05, 0.51], [-1.55, 0.38, 1.38, 0.62], [1.14, -2.85, 1.08, 0.43], [2.9, 0.8, 1.15, 0.58], [0.1, 2.1, 1.55, 0.52]].map(([x, z, w, d], i) => <mesh key={`roof-drift-${i}`} position={[x, 5.894, z]} scale={[w, 0.04 + (i % 3) * 0.008, d]} material={material}>
-      <sphereGeometry args={[1, 20, 10]} />
-    </mesh>)}
-    <SnowCap position={[0, 5.715, 3.19]} size={[9.35, 0.075, 0.32]} material={material} />
-    <SnowCap position={[0, 3.915, 3.69]} size={[9.37, 0.08, 0.94]} material={material} />
-    {[-3.8, -2.15, -0.45, 1.35, 3.25].map((x, i) => <mesh key={`awning-drift-${i}`} position={[x, 3.96, 4.09]} scale={[0.86 + (i % 2) * 0.22, 0.055 + (i % 3) * 0.012, 0.22]} material={material}>
-      <sphereGeometry args={[1, 20, 10]} />
-    </mesh>)}
-    <SnowCap position={[-3.27, 0.177, 4.14]} size={[4.04, 0.065, 0.16]} material={material} />
-    <SnowCap position={[3.27, 0.177, 4.14]} size={[4.04, 0.065, 0.16]} material={material} />
-    {[-4.85, -3.8, -2.35, 2.25, 3.55, 4.85].map((x, i) => <mesh key={`curb-drift-${i}`} position={[x, 0.205, 4.12]} scale={[0.42 + (i % 3) * 0.09, 0.047 + (i % 2) * 0.012, 0.14]} material={material}>
-      <sphereGeometry args={[1, 16, 8]} />
-    </mesh>)}
-    {/* Bin lids: entrance pair plus the collection bins beside and behind the store. */}
-    {[5.05, 5.67].map((x) => <SnowCap key={`entrance-bin-${x}`} position={[x, 1.036, 3.85]} size={[0.54, 0.052, 0.5]} material={material} />)}
-    <SnowCap position={[6.1, 0.879, -1]} size={[0.86, 0.052, 0.63]} material={material} />
-    <SnowCap position={[6.28, 1.45, -1.12]} size={[0.65, 0.052, 0.46]} material={material} />
-    <SnowCap position={[6.17, 1.002, -3.69]} size={[0.53, 0.05, 0.55]} material={material} />
-    <mesh position={[5.62, 0.73, -3.69]} scale={[0.25, 0.033, 0.25]} material={material}><sphereGeometry args={[1, 16, 8]} /></mesh>
-    {/* Light heads, not the glowing lens or the vertical poles. */}
-    <SnowCap position={[-6.13, 5.521, 3.15]} size={[0.36, 0.05, 0.34]} material={material} />
-    <SnowCap position={[6.25, 5.835, -3.4]} size={[0.57, 0.05, 0.43]} material={material} />
-    {/* Vending-machine roof and ledge. */}
-    <SnowCap position={[-5.65, 2.617, 2.03]} size={[1.32, 0.07, 0.78]} material={material} />
-    <mesh position={[-5.65, 2.655, 2.15]} scale={[0.54, 0.04, 0.28]} material={material}><sphereGeometry args={[1, 18, 10]} /></mesh>
-    {/* Match the bicycle's existing transform so the snow stays on its seat, rack and basket. */}
-    <group position={[-6.25, 0.14, 3.48]} rotation={[0, -0.25, 0]} scale={0.84}>
-      <SnowCap position={[-0.3, 1.659, 0]} size={[0.45, 0.045, 0.22]} material={material} />
-      <SnowCap position={[-1.03, 1.386, -0.18]} size={[0.67, 0.045, 0.3]} material={material} />
-      {[-0.31, 0.31].map((z) => <SnowCap key={`basket-side-${z}`} position={[1.065, 1.755, z]} size={[0.67, 0.035, 0.055]} material={material} />)}
-      <SnowCap position={[1.4, 1.755, 0]} size={[0.052, 0.035, 0.62]} material={material} />
-      {[-0.7, 0.73].map((x) => <mesh key={`fender-snow-${x}`} position={[x, 1.091, 0]} scale={[0.32, 0.025, 0.08]} material={material}><sphereGeometry args={[1, 14, 8]} /></mesh>)}
-    </group>
-  </group>;
-}
-
 function SpringLight({ active, autumn = false }: { active: boolean; autumn?: boolean }) {
   const glow = useMemo(() => {
     const canvas = document.createElement("canvas");
@@ -713,171 +650,57 @@ function SpringLight({ active, autumn = false }: { active: boolean; autumn?: boo
 
 function Street({ spring, rainy, winter }: { spring: boolean; rainy: boolean; winter: boolean }) {
   return <group>
-    <Box position={[0, -0.65, 0]} size={[18, 1.1, 18]} color={spring ? "#39434b" : "#122b38"} outline />
-    <Box position={[0, -0.08, 0]} size={[17.8, 0.06, 17.8]} color={spring ? "#f4f5f3" : "#253845"} emissive={spring ? "#f4f5f3" : undefined} intensity={spring ? 0.55 : 0} roughness={spring ? 0.88 : 0.46} />
-    <Box position={[0, -0.025, 5.7]} size={[17.8, 0.025, 6.35]} color={spring ? "#62666c" : winter ? "#344651" : "#3a5460"} emissive={spring ? "#62666c" : undefined} intensity={spring ? 0.32 : 0} roughness={spring || winter ? 0.9 : 0.14} metalness={spring || winter ? 0 : 0.38} />
-    <Box position={[-6.75, 0.025, -0.25]} size={[3.8, 0.15, 10.9]} color={spring ? "#f6f7f5" : "#788b91"} emissive={spring ? "#f6f7f5" : undefined} intensity={spring ? 0.55 : 0} />
-    <Box position={[6.7, 0.025, -0.25]} size={[3.9, 0.15, 10.9]} color={spring ? "#f6f7f5" : "#72858b"} emissive={spring ? "#f6f7f5" : undefined} intensity={spring ? 0.55 : 0} />
-    <Box position={[0, 0.04, 3.62]} size={[10.7, 0.16, 1.18]} color={spring ? "#f6f7f5" : "#858e8b"} emissive={spring ? "#f6f7f5" : undefined} intensity={spring ? 0.55 : 0} />
-    <Box position={[0, 0.11, 4.14]} size={[10.7, 0.06, 0.12]} color={spring ? "#e5e8e7" : "#c4c2ad"} />
-    {Array.from({ length: 7 }, (_, i) => <Box key={`cross-${i}`} position={[-3.9 + i * 1.3, 0.014, 6.08]} size={[0.67, 0.015, 2.6]} color={spring ? "#f5f7f6" : "#c2ccd0"} emissive={spring ? "#f5f7f6" : undefined} intensity={spring ? 0.35 : 0} roughness={spring ? 0.8 : 0.23} opacity={0.87} />)}
+    <RefinedAsset file="street" snow={winter} materials={{
+      site_base: { color: spring ? "#39434b" : "#122b38" },
+      site_top: { color: spring ? "#f4f5f3" : "#253845", emissive: "#f4f5f3", emissiveIntensity: spring ? 0.55 : 0, roughness: spring ? 0.88 : 0.46 },
+      road: { color: spring ? "#62666c" : winter ? "#344651" : "#3a5460", emissive: "#62666c", emissiveIntensity: spring ? 0.32 : 0, roughness: spring || winter ? 0.9 : 0.14, metalness: spring || winter ? 0 : 0.38 },
+      walk_left: { color: spring ? "#f6f7f5" : "#788b91", emissive: "#f6f7f5", emissiveIntensity: spring ? 0.55 : 0 },
+      walk_right: { color: spring ? "#f6f7f5" : "#72858b", emissive: "#f6f7f5", emissiveIntensity: spring ? 0.55 : 0 },
+      walk_entry: { color: spring ? "#f6f7f5" : "#858e8b", emissive: "#f6f7f5", emissiveIntensity: spring ? 0.55 : 0 },
+      curb: { color: spring ? "#e5e8e7" : "#c4c2ad" },
+    }} />
     <group visible={rainy}>
     {([[-3.2, 6.3, 0.75, 2.6, "#5daeca"], [-1.7, 5.82, 0.5, 1.7, "#e6be7e"], [0.35, 6.75, 0.85, 2.7, "#6bbdd1"], [2.45, 5.76, 0.64, 2.1, "#f1cd8d"], [-6.15, 5.58, 0.48, 2.5, "#f37b98"]] as [number, number, number, number, string][]).map(([x, z, w, h, color], i) =>
       <WetReflection key={`reflection-${i}`} x={x} z={z} width={w} length={h} color={color} phase={i * 1.7} active={rainy} />)}
     <WetReflection x={0} z={5.06} width={4.75} length={1.45} color="#f5d59a" phase={0.8} active={rainy} />
     <WetReflection x={-5.35} z={6.9} width={1.55} length={2.15} color="#9dd4e1" phase={2.1} active={rainy} />
     </group>
-    {[-6.5, -5.2, -3.9, 3.8, 5.1, 6.4].map((x, i) => <Box key={`pavement-seam-${i}`} position={[x, 0.11, 3.64]} size={[0.018, 0.005, 1.06]} color="#4b6971" opacity={0.64} />)}
-    {[-5.25, -4.1, 4.1, 5.28].map((x, i) => <Box key={`curb-inset-${i}`} position={[x, 0.1, 4.19]} size={[0.03, 0.012, 0.12]} color="#536b72" />)}
-    {[-6.5, -5.9, -5.3, 5.7, 6.35].map((x, i) => <Box key={`drain-${i}`} position={[x, 0.075, 3.47]} size={[0.4, 0.024, 0.22]} color="#26353c" />)}
-    {[-4.2, -3.7, -3.2, -2.7, -2.2, -1.7].map((x) => <Box key={x} position={[x, 0.078, 3.47]} size={[0.04, 0.03, 0.2]} color="#829198" />)}
-    {[[-7, 2.45], [6.6, 2.5]].map(([x, z], i) => <group key={`rail-${i}`}>
-      {[0, 1.05, 2.1].map((d) => <Tube key={d} from={[x, 0.12, z - d]} to={[x, 0.85, z - d]} radius={0.035} color="#b0bab5" />)}
-      <Tube from={[x, 0.82, z]} to={[x, 0.82, z - 2.1]} radius={0.035} color="#b0bab5" />
-    </group>)}
   </group>;
 }
 
-function StreetProps({ spring }: { spring: boolean }) {
-  const signal = useRef<THREE.Mesh>(null);
-  useFrame(({ clock }) => { if (signal.current) (signal.current.material as THREE.MeshStandardMaterial).emissiveIntensity = spring ? 0.18 : 0.3 + (Math.sin(clock.elapsedTime * 0.7) > 0.7 ? 1 : 0); });
+function StreetProps({ spring, winter }: { spring: boolean; winter: boolean }) {
+  const signal = useRef<THREE.MeshStandardMaterial | undefined>(undefined);
+  useFrame(({ clock }) => {
+    if (signal.current) signal.current.emissiveIntensity = spring ? 0.18 : 0.3 + (Math.sin(clock.elapsedTime * 0.7) > 0.7 ? 1 : 0);
+  });
   return <group>
-    <group position={[-7.5, 0, 3.15]}>
-      <mesh position={[0, 2.95, 0]}><cylinderGeometry args={[0.065, 0.09, 5.9, 10]} /><meshStandardMaterial color="#465961" /></mesh>
-      <Tube from={[0, 5.68, 0]} to={[1.35, 5.52, 0]} radius={0.048} color="#465961" />
-      <Box position={[1.37, 5.43, 0]} size={[0.34, 0.13, 0.34]} color="#f4d596" emissive="#f4d596" intensity={spring ? 0.12 : 1.1} />
-      <Glow position={[1.35, 5.43, 0.5]} color="#ffd8a0" size={[2.5, 2.5]} opacity={spring ? 0.05 : 0.42} />
-      <pointLight position={[1.35, 5.4, 0]} color="#f0c685" intensity={spring ? 0.2 : 7} distance={7} />
-      <Box position={[0.02, 3.1, 0.08]} size={[0.4, 0.58, 0.28]} color="#2e3b42" />
-      <mesh ref={signal} position={[0.02, 3.15, 0.24]}><sphereGeometry args={[0.1, 12, 8]} /><meshStandardMaterial color="#e67d69" emissive="#f45c54" emissiveIntensity={1} /></mesh>
-      <mesh position={[0.02, 2.94, 0.24]}><sphereGeometry args={[0.1, 12, 8]} /><meshStandardMaterial color="#3c6157" emissive="#50cf9d" emissiveIntensity={0.08} /></mesh>
-    </group>
-    <group position={[7.45, 0, -3.4]}>
-      <mesh position={[0, 3.2, 0]}><cylinderGeometry args={[0.1, 0.16, 6.4, 10]} /><meshStandardMaterial color="#485960" /></mesh>
-      <Tube from={[0, 5.8, 0]} to={[-1.2, 5.8, 0]} radius={0.05} color="#54636a" />
-      <Box position={[-1.2, 5.7, 0]} size={[0.6, 0.22, 0.45]} color="#667579" />
-      <Box position={[0.25, 4.72, 0]} size={[0.56, 0.38, 0.04]} color="#2c72a0" />
-      <Label text="青葉通り" position={[0.25, 4.72, 0.027]} width={0.54} height={0.22} color="#f5f7ec" fontSize={48} />
-      {[-1, 0, 1].map((i) => <Tube key={i} from={[-8.5, 6.45 + i * 0.16, -6.6]} to={[0, 6.05 + i * 0.12, 0]} radius={0.008} color="#526a71" />)}
-      <Tube from={[0, 6.05, 0]} to={[-7.55, 5.8, 6]} radius={0.008} color="#526a71" />
-    </group>
-    <group position={[6.25, 0, 4.03]}>
-      <Box position={[0, 0.47, 0]} size={[0.52, 0.94, 0.5]} color={spring ? "#988671" : "#40515b"} />
-      <Box position={[0, 0.94, 0]} size={[0.61, 0.08, 0.58]} color={spring ? "#d1c4ad" : "#becbd0"} />
-      <Label text="P" position={[0, 0.56, 0.256]} width={0.25} height={0.33} color={spring ? "#fff5df" : "#d7e4e5"} fontSize={92} />
-    </group>
+    <RefinedAsset file="street-props" snow={winter} materials={{
+      street_lamp: { emissive: "#f4d596", emissiveIntensity: spring ? 0.12 : 1.1 },
+      traffic_signal: { emissive: "#f45c54" },
+    }} materialRefs={{ traffic_signal: signal }} />
+    <Glow position={[-6.15, 5.43, 3.65]} color="#ffd8a0" size={[2.5, 2.5]} opacity={spring ? 0.05 : 0.42} />
+    <pointLight position={[-6.15, 5.4, 3.15]} color="#f0c685" intensity={spring ? 0.2 : 7} distance={7} />
   </group>;
 }
 
-function VendingMachine({ spring }: { spring: boolean }) {
-  return <group position={[-5.65, 0.08, 2.03]}>
-    <Box position={[0, 1.25, 0]} size={[1.35, 2.5, 0.8]} color="#e6edf0" outline />
-    <Box position={[0, 2.33, 0.415]} size={[1.22, 0.26, 0.04]} color="#e94c63" emissive="#ed445f" intensity={spring ? 0.08 : 0.45} />
-    <Label text="DRINKS" position={[0, 2.33, 0.443]} width={1.08} height={0.17} color="#fff7e1" fontSize={46} />
-    <Box position={[-0.07, 1.52, 0.415]} size={[1.03, 1.26, 0.045]} color="#2c566d" emissive="#8cc6e0" intensity={spring ? 0.04 : 0.25} />
-    {[0, 1, 2].map((row) => Array.from({ length: 5 }, (_, col) => <group key={`${row}-${col}`} position={[-0.48 + col * 0.2, 1.92 - row * 0.34, 0.47]}>
-      <mesh><cylinderGeometry args={[0.062, 0.065, 0.22, 8]} /><meshStandardMaterial color={["#e6b59c", "#a1c6cf", "#f1d182", "#c2daaa", "#e8a1a1"][(col + row) % 5]} /></mesh>
-      <Box position={[0, 0.075, 0]} size={[0.12, 0.055, 0.13]} color="#f1efe2" />
-    </group>))}
-    <Box position={[-0.22, 0.57, 0.42]} size={[0.55, 0.13, 0.045]} color="#243a43" />
-    <Box position={[0.42, 0.83, 0.43]} size={[0.22, 0.27, 0.025]} color="#526973" />
-    {[0, 1, 2].map((row) => <Box key={`button-${row}`} position={[0.41, 1.31 - row * 0.12, 0.451]} size={[0.13, 0.04, 0.018]} color={row === 1 ? "#e5c586" : "#b6ced2"} emissive={row === 1 ? "#f0c779" : "#acd7df"} intensity={0.28} />)}
-    <Box position={[0.43, 0.37, 0.444]} size={[0.32, 0.22, 0.018]} color="#283f49" />
-    <Box position={[0, 0.045, 0.08]} size={[1.42, 0.09, 0.89]} color="#9aafb2" />
-    <Glow position={[0, 1.8, 0.68]} color="#95d8ec" size={[1.5, 2.6]} opacity={spring ? 0.04 : 0.26} />
-    <pointLight position={[0, 1.7, 0.62]} intensity={spring ? 0.2 : 2.4} distance={3} color="#a5def5" />
-  </group>;
-}
-
-function BikeWheel({ x }: { x: number }) {
-  const spokes = useMemo(() => {
-    const points: number[] = [];
-    for (let i = 0; i < 20; i++) {
-      const angle = i * Math.PI / 10;
-      points.push(0, 0, i % 2 ? 0.018 : -0.018, Math.cos(angle) * 0.452, Math.sin(angle) * 0.452, i % 2 ? -0.018 : 0.018);
-    }
-    const geometry = new THREE.BufferGeometry();
-    geometry.setAttribute("position", new THREE.Float32BufferAttribute(points, 3));
-    return geometry;
-  }, []);
-  useEffect(() => () => spokes.dispose(), [spokes]);
-  return <group position={[x, 0.53, 0]}>
-    <mesh><torusGeometry args={[0.49, 0.047, 10, 48]} /><meshStandardMaterial color="#1b292e" roughness={0.82} /></mesh>
-    <mesh><torusGeometry args={[0.443, 0.012, 8, 48]} /><meshStandardMaterial color="#adb9b7" metalness={0.7} roughness={0.28} /></mesh>
-    <lineSegments geometry={spokes}><lineBasicMaterial color="#a6b5b6" transparent opacity={0.82} /></lineSegments>
-    <mesh rotation={[Math.PI / 2, 0, 0]}><cylinderGeometry args={[0.08, 0.08, 0.16, 14]} /><meshStandardMaterial color="#718b91" metalness={0.6} /></mesh>
-    <mesh rotation={[0, 0, -0.18]}><torusGeometry args={[0.55, 0.027, 8, 44, Math.PI * 1.18]} /><meshStandardMaterial color="#bdd1cd" metalness={0.34} roughness={0.4} /></mesh>
-  </group>;
-}
-
-function Bicycle({ spring }: { spring: boolean }) {
-  const frame = spring ? "#d9d4c8" : "#a8c9bd";
-  const metal = spring ? "#b7b3aa" : "#aab9b7";
-  return <group position={[-6.25, 0.14, 3.48]} rotation={[0, -0.25, 0]} scale={0.84}>
-    <BikeWheel x={-0.7} /><BikeWheel x={0.73} />
-    {/* Low step-through city frame, with a real fork and chain case. */}
-    <Tube from={[-0.7, 0.53, 0]} to={[-0.2, 1.3, 0]} radius={0.039} color={frame} />
-    <Tube from={[-0.7, 0.53, 0]} to={[-0.05, 0.64, 0]} radius={0.036} color={frame} />
-    <Tube from={[-0.2, 1.3, 0]} to={[-0.05, 0.64, 0]} radius={0.043} color={frame} />
-    <Tube from={[-0.05, 0.64, 0]} to={[0.41, 1.3, 0]} radius={0.044} color={frame} />
-    <Tube from={[-0.2, 1.3, 0]} to={[0.17, 1.15, 0]} radius={0.03} color={frame} />
-    <Tube from={[0.17, 1.15, 0]} to={[0.41, 1.3, 0]} radius={0.03} color={frame} />
-    <Tube from={[0.41, 1.3, 0]} to={[0.73, 0.53, 0]} radius={0.035} color={metal} />
-    <Tube from={[0.43, 1.27, 0.07]} to={[0.73, 0.53, 0.07]} radius={0.022} color={metal} />
-    <Tube from={[-0.2, 1.3, 0]} to={[-0.25, 1.55, 0]} radius={0.025} color={metal} />
-    <Box position={[-0.3, 1.6, 0]} size={[0.48, 0.075, 0.24]} color="#514846" roughness={0.9} />
-    <Tube from={[0.41, 1.3, 0]} to={[0.4, 1.6, 0]} radius={0.027} color={metal} />
-    <Tube from={[0.39, 1.6, 0]} to={[0.72, 1.65, 0]} radius={0.025} color={metal} />
-    <Tube from={[0.66, 1.65, -0.22]} to={[0.66, 1.65, 0.22]} radius={0.024} color={metal} />
-    {[-0.23, 0.23].map((z) => <Box key={z} position={[0.68, 1.65, z]} size={[0.15, 0.055, 0.08]} color="#433f3d" />)}
-    <mesh position={[-0.05, 0.64, 0.085]}><torusGeometry args={[0.15, 0.02, 8, 24]} /><meshStandardMaterial color="#70858a" metalness={0.65} /></mesh>
-    <Tube from={[-0.62, 0.51, 0.105]} to={[-0.05, 0.64, 0.105]} radius={0.038} color="#c4d1c8" />
-    <Tube from={[-0.05, 0.64, 0.105]} to={[-0.03, 0.42, 0.105]} radius={0.017} color="#68777b" />
-    <Box position={[-0.02, 0.39, 0.16]} size={[0.23, 0.04, 0.12]} color="#343c3d" />
-    <Tube from={[-0.72, 0.58, 0.08]} to={[-0.48, 0.08, 0.25]} radius={0.018} color="#66787b" />
-    <Tube from={[-1.07, 1.31, -0.18]} to={[-0.23, 1.31, -0.18]} radius={0.023} color={metal} />
-    {[-1.02, -0.45].map((x) => <Tube key={x} from={[x, 1.28, -0.18]} to={[x + 0.17, 0.9, -0.18]} radius={0.016} color={metal} />)}
-    <Box position={[-1.03, 1.34, -0.18]} size={[0.7, 0.045, 0.33]} color="#667d7e" />
-    {/* Open wire shopping basket: meshwork remains legible from the front view. */}
-    <Tube from={[0.67, 1.35, -0.27]} to={[1.39, 1.35, -0.27]} radius={0.015} color={metal} />
-    <Tube from={[0.67, 1.35, 0.27]} to={[1.39, 1.35, 0.27]} radius={0.015} color={metal} />
-    {[0.75, 1.35].map((x) => <Tube key={x} from={[x, 1.35, -0.27]} to={[x, 1.35, 0.27]} radius={0.015} color={metal} />)}
-    {[0.76, 0.96, 1.16, 1.36].map((x) => <group key={x}>
-      <Tube from={[x, 1.36, -0.27]} to={[x, 1.72, -0.31]} radius={0.012} color={metal} />
-      <Tube from={[x, 1.36, 0.27]} to={[x, 1.72, 0.31]} radius={0.012} color={metal} />
-    </group>)}
-    <Tube from={[0.73, 1.73, -0.31]} to={[1.4, 1.73, -0.31]} radius={0.018} color={metal} />
-    <Tube from={[0.73, 1.73, 0.31]} to={[1.4, 1.73, 0.31]} radius={0.018} color={metal} />
-    <Tube from={[1.4, 1.73, -0.31]} to={[1.4, 1.73, 0.31]} radius={0.018} color={metal} />
-    <Box position={[0.93, 1.18, 0]} size={[0.27, 0.16, 0.19]} color="#f2e9cb" emissive="#ffe9ab" intensity={0.22} />
-    <Box position={[-1.13, 0.73, 0]} size={[0.1, 0.17, 0.12]} color="#d45e5d" emissive="#cf585a" intensity={0.25} />
-  </group>;
-}
-
-function EntranceProps({ spring }: { spring: boolean }) {
+function VendingMachine({ spring, winter }: { spring: boolean; winter: boolean }) {
   return <group>
-    {[-3.8, -3.53, -3.26].map((x) => <group key={x} position={[x, 0, 3.73]}>
-      <mesh position={[0, 0.52, 0]}><cylinderGeometry args={[0.1, 0.11, 1.03, 12]} /><meshStandardMaterial color="#3b4e58" /></mesh>
-      <mesh position={[0, 1.02, 0]} rotation={[0, 0, x * 0.04]}><coneGeometry args={[0.27, 0.65, 10]} /><meshStandardMaterial color={x < -3.5 ? "#d6c397" : "#7eaac1"} side={THREE.DoubleSide} /></mesh>
-      <mesh position={[0, 1.32, 0]}><sphereGeometry args={[0.05, 10, 8]} /><meshStandardMaterial color="#e7e1c9" /></mesh>
-    </group>)}
-    <Box position={[-3.53, 0.32, 3.72]} size={[0.92, 0.47, 0.41]} color="#263b46" />
-    <group position={[5.05, 0, 3.85]}>
-      {[0, 0.62].map((x) => <group key={x} position={[x, 0, 0]}>
-        <mesh position={[0, 0.48, 0]}><cylinderGeometry args={[0.24, 0.19, 0.96, 12]} /><meshStandardMaterial color={spring ? "#bca98e" : "#809296"} emissive={spring ? "#ad8d65" : "#000000"} emissiveIntensity={spring ? 0.18 : 0} /></mesh>
-        <mesh position={[0, 0.98, 0]}><cylinderGeometry args={[0.27, 0.27, 0.06, 12]} /><meshStandardMaterial color={spring ? "#786b5a" : "#344a51"} /></mesh>
-      </group>)}
-    </group>
-    <group position={[-5.55, 0, -2.2]}>
-      <Box position={[0, 0.7, 0]} size={[1.1, 1.4, 0.25]} color="#425761" />
-      <Box position={[0, 0.72, 0.145]} size={[0.93, 1.12, 0.025]} color="#ddd8c0" />
-      {[-0.3, 0, 0.3].map((x, i) => <Box key={i} position={[x, 0.82, 0.166]} size={[0.22, 0.64, 0.008]} color={["#80adbd", "#e9ba80", "#b8c8a9"][i]} />)}
-      <Box position={[0, 1.47, 0]} size={[1.25, 0.09, 0.4]} color="#344752" />
+    <RefinedAsset file="vending" snow={winter} />
+    <group position={[-5.65, 0.08, 2.03]}>
+      <Glow position={[0, 1.8, 0.68]} color="#95d8ec" size={[1.5, 2.6]} opacity={spring ? 0.04 : 0.26} />
+      <pointLight position={[0, 1.7, 0.62]} intensity={spring ? 0.2 : 2.4} distance={3} color="#a5def5" />
     </group>
   </group>;
 }
 
-function InteriorStock({ position, rotation = [0, 0, 0], length = 2.3, levels = 3 }: { position: [number, number, number]; rotation?: [number, number, number]; length?: number; levels?: number }) {
+function InteriorStock(props: { position: [number, number, number]; rotation?: [number, number, number]; length?: number; levels?: number; front?: boolean }) {
+  const file = props.front ? "stock-front" : props.length === 1.65 ? "stock-back" : "stock-wide";
+  return <group position={props.position} rotation={props.rotation}>
+    <RefinedAsset file={file} fallback={<OriginalInteriorStock {...props} position={[0, 0, 0]} rotation={[0, 0, 0]} />} />
+  </group>;
+}
+
+function OriginalInteriorStock({ position, rotation = [0, 0, 0], length = 2.3, levels = 3 }: { position: [number, number, number]; rotation?: [number, number, number]; length?: number; levels?: number }) {
   return <group position={position} rotation={rotation}>
     <Box position={[0, 1.04, 0]} size={[length, 2.1, 0.68]} color="#d5d9d0" />
     {Array.from({ length: levels }, (_, level) => <group key={level} position={[0, 0.48 + level * 0.65, 0.37]}>
@@ -887,20 +710,6 @@ function InteriorStock({ position, rotation = [0, 0, 0], length = 2.3, levels = 
         const colors = ["#d9a7a0", "#e5c97a", "#aac7ad", "#a8c5cf", "#dcbbb0"];
         return <Box key={i} position={[x, 0, 0.05]} size={[0.12, 0.42 + ((i + level) % 3) * 0.035, 0.23]} color={colors[(i + level * 2) % colors.length]} />;
       })}
-    </group>)}
-  </group>;
-}
-
-function Fridges() {
-  return <group position={[-4.17, 0, -1.2]} rotation={[0, Math.PI / 2, 0]}>
-    {[-2.1, -0.18, 1.74].map((x, index) => <group key={x} position={[x, 0, 0]}>
-      <Box position={[0, 1.58, 0]} size={[1.82, 3.16, 0.65]} color="#d0dce0" />
-      <Box position={[0, 1.58, 0.34]} size={[1.62, 2.82, 0.035]} color="#74a6b9" opacity={0.32} />
-      {[0.6, 1.35, 2.1].map((y, row) => <group key={row}>
-        <Box position={[0, y, 0.33]} size={[1.55, 0.045, 0.12]} color="#e5f5ed" emissive="#d9faff" intensity={0.6} />
-        {Array.from({ length: 6 }, (_, i) => <mesh key={i} position={[-0.64 + i * 0.255, y + 0.28, 0.31]}><cylinderGeometry args={[0.085, 0.085, 0.42, 10]} /><meshStandardMaterial color={["#e9b9a9", "#d6d98e", "#afd3ce", "#c7a7bd"][(i + row + index) % 4]} /></mesh>)}
-      </group>)}
-      <Tube from={[0.76, 0.42, 0.4]} to={[0.76, 2.74, 0.4]} radius={0.025} color="#e5e9dc" />
     </group>)}
   </group>;
 }
@@ -1148,26 +957,21 @@ function SpriteCashier({ onProfile, active }: { onProfile: () => void; active: b
 }
 
 function Checkout({ onCheckout, active }: { onCheckout: () => void; active: boolean }) {
-  const image = useLoader(THREE.TextureLoader, "/checkout-reference.png");
-  useEffect(() => {
-    image.colorSpace = THREE.SRGBColorSpace;
-    image.anisotropy = 8;
-    image.needsUpdate = true;
-  }, [image]);
   return <group position={[2.25, 0, -1.35]}>
-    <Clickable position={[0, 0.76, 0.66]} active={active} hoverScale={1.075} onClick={(e) => {
+    <Clickable position={[0, 0.15, 0]} active={active} hoverScale={1.015} onClick={(e) => {
       if (e.intersections.some((hit) => hit.object.userData.projectGift)) return;
       e.stopPropagation();
       onCheckout();
     }}>
-      {/* Scale the supplied image with its hit area, keeping the original pose. */}
-      <mesh position={[0, 0.34, -0.04]} raycast={() => {}}>
-        <planeGeometry args={[4.15, 4.15 * 919 / 1711]} />
-        <meshBasicMaterial map={image} transparent alphaTest={0.04} depthWrite={false} side={THREE.DoubleSide} toneMapped={false} />
-      </mesh>
-      <Label text="MONDAY MART 24" position={[0, 0.094, -0.035]} width={1.865} height={0.278} color="#15516e" background="#e7e2d4" fontSize={100} sharp />
-      {/* Only the opaque counter body receives pointer events. */}
-      <mesh>
+      {/* Source: MONDAY_MART24_counter.blend; hover stays anchored to the floor. */}
+      <group position={[0, -0.15, 0]}>
+        <RefinedAsset file="checkout" fallback={<>
+          <Box position={[0, 0.75, 0]} size={[3.98, 1.2, 1.06]} color="#acbfba" />
+          <Box position={[0, 1.312, 0]} size={[4.15, 0.086, 1.258]} color="#ebe7d9" />
+        </>} />
+      </group>
+      {/* Preserve the previous contact hit area's world position and dimensions. */}
+      <mesh position={[0, 0.61, 0.66]}>
         <boxGeometry args={[3.6, 1.12, 0.08]} />
         <meshBasicMaterial transparent opacity={0} colorWrite={false} depthWrite={false} />
       </mesh>
@@ -1191,78 +995,29 @@ function Interior({ projects, onSelect, onCheckout, onProfile, active, fitRoom, 
   // the store's floor, walls and ceiling rather than a separate backdrop.
   const distanceScale = Math.max(1, 1.45 / (size.width / size.height));
   const extension = fitRoom && distanceScale > 1 ? (distanceScale - 1) * 3.28 + 2 : 0;
+  const floorEnd = active ? 3.31 : 3.16;
   useFrame(() => {
     // The extra room is only a camera surround. Never expose its outer shell
     // while approaching the shop from outside.
     if (extendedRoom.current) extendedRoom.current.visible = extension > 0 && (active || camera.position.z < 3.1 + extension - 0.35);
   });
   return <group>
-    <Box position={[0, 0.11, -0.48]} size={[9, 0.07, 7.3]} color="#eadbbd" emissive="#b38f56" intensity={0.05} />
-    {[-3, -1.5, 0, 1.5, 3].map((x) => <Box key={x} position={[x, 0.156, -0.5]} size={[mobileRoom ? 0.006 : 0.022, 0.01, 7.2]} color={mobileRoom ? "#e4d8c4" : "#d4cfc0"} opacity={mobileRoom ? 0.08 : 1} />)}
-    {[-3.2, -1.9, -0.6, 0.7, 2].map((z) => <Box key={z} position={[0, 0.156, z]} size={[8.9, 0.01, mobileRoom ? 0.006 : 0.022]} color={mobileRoom ? "#e4d8c4" : "#d4cfc0"} opacity={mobileRoom ? 0.08 : 1} />)}
-    <Box position={[0, 2.7, -4.08]} size={[9, 5.4, 0.16]} color="#e7dfc8" />
-    <Box position={[-4.52, 2.7, -0.5]} size={[0.16, 5.4, 7.2]} color="#d7ddda" />
-    <Box position={[4.52, 2.7, -0.5]} size={[0.16, 5.4, 7.2]} color="#bec9c8" />
-    <Box position={[0, 5.44, -0.5]} size={[9.25, 0.14, 7.3]} color="#e7e4d4" />
+    <Box position={[0, 0.11, (floorEnd - 4.16) / 2]} size={[9, 0.07, floorEnd + 4.16]} color="#eadbbd" emissive="#b38f56" intensity={0.05} />
+    <RefinedAsset file="interior" />
     {extension > 0 && <group ref={extendedRoom} visible={false}>
-      <Box position={[0, 0.11, 3.17 + extension / 2]} size={[9, 0.07, extension]} color="#eadbbd" emissive="#b38f56" intensity={0.05} />
-      <Box position={[-4.52, 2.7, 3.1 + extension / 2]} size={[0.16, 5.4, extension]} color="#d7ddda" />
-      <Box position={[4.52, 2.7, 3.1 + extension / 2]} size={[0.16, 5.4, extension]} color="#bec9c8" />
-      <Box position={[0, 5.44, 3.15 + extension / 2]} size={[9.25, 0.14, extension]} color="#e7e4d4" />
+      <Box position={[0, 0.11, 3.31 + extension / 2]} size={[9, 0.07, extension]} color="#eadbbd" emissive="#b38f56" intensity={0.05} />
+      <MatteWall position={[-4.52, 2.7, 3.1 + extension / 2]} size={[0.16, 5.4, extension]} color="#d7ddda" />
+      <MatteWall position={[4.52, 2.7, 3.1 + extension / 2]} size={[0.16, 5.4, extension]} color="#bec9c8" />
+      <Box position={[0, 5.44, 3.15 + extension / 2]} size={[9.25, 0.14, extension]} color="#eeeede" roughness={0.94} />
     </group>}
-    <Fridges />
     <InteriorStock position={[-1.77, 0.14, -1.65]} length={2.35} />
-    <group visible={!mobileRoom}><InteriorStock position={[-1.77, 0.14, 0.55]} length={2.35} /></group>
+    <group visible={!mobileRoom}><InteriorStock position={[-1.77, 0.14, 0.55]} length={2.35} front /></group>
     <InteriorStock position={[0.15, 0.14, -3.36]} length={1.65} levels={2} />
     <ProjectDisplay projects={projects} onSelect={onSelect} active={active} loadImages={loadProjects} />
     <Suspense fallback={null}><SpriteCashier onProfile={onProfile} active={active} /></Suspense>
     {loadCheckout ? <Suspense fallback={<CheckoutPlaceholder onCheckout={onCheckout} active={active} />}><Checkout onCheckout={onCheckout} active={active} /></Suspense> : <CheckoutPlaceholder onCheckout={onCheckout} active={active} />}
-    <Box position={[-0.8, 1.23, -3.99]} size={[1.12, 2.42, 0.06]} color="#778e93" />
-    <Box position={[-0.8, 1.28, -3.95]} size={[0.72, 1.5, 0.035]} color="#b9ccc4" />
-    <Label text="STAFF ONLY" position={[-0.8, 2.02, -3.918]} width={0.68} height={0.15} color="#234151" fontSize={48} />
-    <Box position={[-3.32, 3.95, -3.97]} size={[1.1, 0.78, 0.03]} color="#e4b895" />
-    <Label text="おにぎり / BENTO" position={[-3.32, 4, -3.948]} width={1.04} height={0.24} color="#5c4a37" fontSize={46} />
-    <group visible={!mobileRoom}>
-      <Box position={[-0.02, 4.93, -0.45]} size={[7.8, 0.12, 0.7]} color="#fff7dd" emissive="#fff2c1" intensity={1.4} />
-      <Box position={[-0.02, 4.78, -0.45]} size={[7.55, 0.03, 0.12]} color="#fffbe9" emissive="#fffbe9" intensity={2} />
-    </group>
-    {[[-3.2, 3.8, -1], [0, 3.8, -1], [3.2, 3.8, -1]].map(([x, y, z], i) => <pointLight key={i} position={[x, y, z]} color="#ffdaa0" intensity={i === 2 ? 10 : 7} distance={7} />)}
-    <Box position={[-2.93, 0.16, 2.1]} size={[0.72, 0.012, 1.15]} color="#e5bf6a" opacity={0.48} />
-    <Box position={[-1.14, 0.16, 2.1]} size={[0.72, 0.012, 1.15]} color="#e5bf6a" opacity={0.48} />
-    <group position={[-3.05, 0.15, 1.83]}>
-      <Box position={[0, 0.6, 0]} size={[1.1, 1.2, 0.5]} color="#d7dfda" />
-      <Box position={[0, 1.17, 0.27]} size={[0.97, 0.47, 0.04]} color="#704d3b" />
-      <Label text="COFFEE" position={[0, 1.17, 0.297]} width={0.85} height={0.23} color="#fff0c7" fontSize={60} />
-      {[0.24, -0.24].map((x) => <mesh key={x} position={[x, 0.64, 0.31]}><cylinderGeometry args={[0.13, 0.1, 0.34, 12]} /><meshStandardMaterial color="#f1e5cb" /></mesh>)}
-    </group>
-    <group position={[-3.1, 0.16, -3.37]}>
-      <Box position={[0, 0.57, 0]} size={[1.3, 1.12, 0.58]} color="#b8ced1" />
-      <Box position={[0, 1.15, 0]} size={[1.36, 0.08, 0.67]} color="#e4eeee" />
-      <Box position={[0, 1.19, 0]} size={[1.1, 0.025, 0.42]} color="#8bb5c0" opacity={0.4} />
-      <Label text="ICE" position={[0, 0.62, 0.307]} width={0.76} height={0.25} color="#f9f7ed" fontSize={80} />
-    </group>
-    <group position={[0.3, 0.14, 1.8]} visible={!mobileRoom}>
-      <Box position={[0, 0.64, 0]} size={[1.25, 1.28, 0.55]} color="#8b705d" />
-      <Box position={[0, 1.29, 0]} size={[1.4, 0.06, 0.68]} color="#f1ead4" />
-      {[0, 1, 2].map((i) => <Box key={i} position={[-0.36 + i * 0.34, 0.72, 0.3]} size={[0.26, 0.53, 0.055]} color={["#ddd5a5", "#a6bbbe", "#d7b6ab"][i]} />)}
-      <Label text="MAGAZINE" position={[0, 1.08, 0.294]} width={1.05} height={0.16} color="#f4e8cc" fontSize={55} />
-    </group>
-    <group position={[1.07, 0.15, -2.68]}>
-      <Box position={[0, 0.62, 0]} size={[0.92, 1.22, 0.6]} color="#d8bc95" />
-      <Box position={[0, 1.25, 0]} size={[1.06, 0.08, 0.68]} color="#f3e2bb" />
-      <Box position={[0, 1.48, 0]} size={[0.92, 0.39, 0.55]} color="#c98769" opacity={0.45} />
-      {[-0.25, 0, 0.25].map((x) => <mesh key={x} position={[x, 1.34, 0.09]}><sphereGeometry args={[0.13, 10, 8]} /><meshStandardMaterial color="#ba855e" /></mesh>)}
-      <Label text="おでん" position={[0, 0.88, 0.309]} width={0.73} height={0.22} color="#664d3b" fontSize={76} />
-    </group>
-    <group position={[-1.2, 0.15, -3.85]}>
-      <Box position={[0, 0.55, 0]} size={[1.13, 1.1, 0.52]} color="#d2dcd8" />
-      <Box position={[0, 1.12, 0]} size={[1.23, 0.07, 0.61]} color="#f3e6c9" />
-      {[0, 1, 2, 3].map((i) => <group key={i} position={[-0.41 + i * 0.27, 0.68, 0.285]}>
-        <Box size={[0.2, 0.24, 0.045]} color={i % 2 ? "#e4c582" : "#c8d3ad"} />
-        <Box position={[0, 0.13, 0]} size={[0.22, 0.035, 0.05]} color="#eff0dd" />
-      </group>)}
-      <Label text="BENTO" position={[0, 0.97, 0.292]} width={0.9} height={0.16} color="#4c695d" fontSize={62} />
-    </group>
+    <StoreLighting />
+    <group visible={!mobileRoom}><RefinedAsset file="magazine" /></group>
   </group>;
 }
 
@@ -1288,11 +1043,13 @@ function SlidingDoors({ mode, onEnter }: { mode: Mode; onEnter: () => void }) {
   return <group position={[0, 0, 3.3]}>
     {[-1, 1].map((side) => <group key={side} ref={side < 0 ? left : right} position={[side * 0.55, 0, 0]}>
       <Box position={[0, 1.87, 0]} size={[1.08, 3.52, 0.07]} color="#a3c6d0" opacity={0.16} roughness={0.1} metalness={0.3} />
+      <RefinedAsset file={side < 0 ? "door-left" : "door-right"} fallback={<>
       <Box position={[0, 3.61, 0.055]} size={[1.1, 0.055, 0.08]} color="#304d5b" />
       <Box position={[side * 0.52, 1.87, 0.055]} size={[0.055, 3.48, 0.08]} color="#304d5b" />
       <Box position={[0, 0.16, 0.055]} size={[1.1, 0.1, 0.08]} color="#304d5b" />
       <Box position={[-side * 0.42, 1.7, 0.067]} size={[0.025, 0.52, 0.03]} color="#d7e5df" />
       <Box position={[0, 1.13, 0.064]} size={[1.02, 0.1, 0.022]} color="#b0c3c5" opacity={0.6} />
+      </>} />
     </group>)}
     <mesh position={[0, 1.9, 0.14]} onPointerOver={mode === "outside" ? (e) => { e.stopPropagation(); setHovered(true); } : undefined} onPointerOut={() => setHovered(false)} onClick={mode === "outside" ? (e) => { e.stopPropagation(); onEnter(); } : undefined}>
       <boxGeometry args={[2.25, 3.65, 0.14]} />
@@ -1301,72 +1058,36 @@ function SlidingDoors({ mode, onEnter }: { mode: Mode; onEnter: () => void }) {
   </group>;
 }
 
-function Facade({ mode, onEnter, spring, rainy }: { mode: Mode; onEnter: () => void; spring: boolean; rainy: boolean }) {
+function Facade({ mode, onEnter, spring, rainy, winter }: { mode: Mode; onEnter: () => void; spring: boolean; rainy: boolean; winter: boolean }) {
   const sign = useRef<THREE.Mesh>(null);
   // The warm-season front face receives little direct light. Give its white
   // lightbox a neutral luminance floor so tone mapping doesn't turn it gray;
   // the standard material still receives each season's exterior light.
   useFrame(({ clock }) => { if (sign.current) (sign.current.material as THREE.MeshStandardMaterial).emissiveIntensity = spring ? 1 : 0.45 + Math.sin(clock.elapsedTime * 1.2) * 0.035 + (Math.sin(clock.elapsedTime * 8.3) > 0.994 ? 0.12 : 0); });
   return <group>
-    <Box position={[0, 4.64, 3.3]} size={[9.35, 1.27, 0.36]} color={spring ? "#1688c7" : "#3e8db6"} outline />
-    <Box position={[0, 5.31, 3.52]} size={[9.42, 0.075, 0.09]} color="#f4f3df" emissive="#f4f3df" intensity={0.6} />
-    <Box position={[0, 4.02, 3.52]} size={[9.42, 0.075, 0.09]} color="#f4f3df" emissive="#f4f3df" intensity={0.6} />
-    <mesh ref={sign} position={[0, 4.65, 3.511]}><boxGeometry args={[5.1, 0.76, 0.06]} /><meshStandardMaterial color="#ffffff" emissive="#ffffff" emissiveIntensity={spring ? 1 : 0.45} /></mesh>
-    <Label text="MONDAY" position={[-0.56, 4.68, 3.60]} width={3.38} height={0.61} color="#15516e" fontSize={196} sharp />
-    <Label text="MART 24" position={[1.64, 4.68, 3.60]} width={1.33} height={0.28} color="#276a85" fontSize={147} sharp />
+    <RefinedAsset file="facade" snow={winter} />
+    <RefinedAsset file="sign-shell" snow={winter} color={spring ? "#1688c7" : "#3e8db6"} fallback={<Box position={[0, 4.64, 3.3]} size={[9.35, 1.27, 0.36]} color={spring ? "#1688c7" : "#3e8db6"} outline />} />
+    <mesh ref={sign} position={[0, 4.65, 3.594]}><boxGeometry args={[5.1, 0.76, 0.01]} /><meshStandardMaterial color="#ffffff" emissive="#ffffff" emissiveIntensity={spring ? 1 : 0.45} /></mesh>
+    <Label text="MONDAY" position={[-0.56, 4.68, 3.605]} width={3.38} height={0.61} color="#15516e" fontSize={196} sharp />
+    <Label text="MART 24" position={[1.64, 4.68, 3.605]} width={1.33} height={0.28} color="#276a85" fontSize={147} sharp />
     <Glow position={[0, 4.68, 3.91]} color="#fff1c3" size={[6.4, 1.65]} opacity={spring ? 0.04 : 0.18} />
-    {[-4.1, 4.1].map((x) => <group key={x} position={[x, 4.66, 3.57]}>
-      <mesh><circleGeometry args={[0.39, 32]} /><meshBasicMaterial color="#fff0c9" /></mesh>
-      <mesh position={[0, 0, 0.015]}><ringGeometry args={[0.2, 0.275, 32]} /><meshBasicMaterial color="#3e8db6" /></mesh>
-    </group>)}
-    <Box position={[0, 3.8, 3.66]} size={[9.5, 0.15, 1.06]} color="#334c59" />
-    <Box position={[0, 3.75, 4.15]} size={[9.5, 0.08, 0.11]} color="#86b9c7" emissive="#78aec4" intensity={spring ? 0.05 : 0.35} />
-    {[-4.42, -3.16, -1.9, -0.64, 0.64, 1.9, 3.16, 4.42].map((x) => <Box key={`canopy-rib-${x}`} position={[x, 3.714, 3.69]} size={[0.035, 0.018, 0.93]} color="#94aeb4" />)}
-    <Box position={[0, 3.62, 4.18]} size={[9.36, 0.025, 0.025]} color="#d8e9e5" emissive="#add9dd" intensity={spring ? 0.06 : 0.55} />
-    {[-2.7, 0, 2.7].map((x) => <group key={`canopy-light-${x}`}>
-      <Box position={[x, 3.67, 3.77]} size={[1.36, 0.035, 0.23]} color="#ffe5a5" emissive="#ffe2a2" intensity={spring ? 0.1 : 1.15} />
-      <pointLight position={[x, 3.3, 3.85]} color="#ffdba2" intensity={spring ? 0.3 : 2.7} distance={3.5} />
-    </group>)}
-    {[-4.64, -2.68, -1.14, 1.14, 2.68, 4.64].map((x) => <Box key={x} position={[x, 1.97, 3.38]} size={[0.08, 3.82, 0.12]} color="#2f5260" />)}
-    <Box position={[0, 0.12, 3.38]} size={[9.4, 0.15, 0.26]} color="#415a63" />
-    {[-4.65, -2.68, -1.14, 1.14, 2.68, 4.65].map((x) => <Box key={`sill-${x}`} position={[x, 0.24, 3.48]} size={[0.13, 0.05, 0.12]} color="#8aa7ab" metalness={0.45} roughness={0.28} />)}
-    {[-3.65, 3.65].map((x) => <group key={x} position={[x, 1.92, 3.39]}>
-      <Box size={[1.89, 3.62, 0.06]} color="#88b7c3" opacity={0.14} roughness={0.08} metalness={0.38} />
-      <Box position={[0, 0.33, 0.05]} size={[1.89, 0.05, 0.09]} color="#416372" />
-      <Box position={[0, -1.2, 0.05]} size={[1.89, 0.16, 0.09]} color="#557583" />
-      <Box position={[-0.67, 0.05, 0.075]} size={[0.012, 1.5, 0.01]} color="#d5e8e9" opacity={0.25} />
-      <Box position={[0.62, 0.48, 0.075]} size={[0.012, 1.95, 0.01]} color="#d5e8e9" opacity={0.25} />
-      {[-0.72, -0.24, 0.41, 0.76].map((dx, i) => <Box key={dx} position={[dx, 0.32 - (i % 2) * 0.62, 0.092]} size={[0.01, 0.42 + (i % 3) * 0.18, 0.008]} color="#b9d6db" opacity={0.31} />)}
-    </group>)}
+    {[-2.7, 0, 2.7].map((x) => <pointLight key={x} position={[x, 3.3, 3.85]} color="#ffdba2" intensity={spring ? 0.3 : 2.7} distance={3.5} />)}
     <GlassRain active={rainy && mode !== "inside"} />
     <SlidingDoors mode={mode} onEnter={onEnter} />
-    <Box position={[-3.62, 1.15, 3.45]} size={[0.82, 0.98, 0.025]} color="#f4d39a" />
-    <Label text="HOT FOOD" position={[-3.62, 1.2, 3.468]} width={0.78} height={0.2} color="#8d5a3f" fontSize={52} />
-    <Box position={[3.67, 1.18, 3.45]} size={[0.86, 1.14, 0.025]} color="#8fc4c8" />
-    <Label text="NEW!" position={[3.67, 1.3, 3.468]} width={0.76} height={0.24} color="#2c6175" fontSize={70} />
-    <Box position={[4.68, 2.82, -0.54]} size={[0.3, 0.74, 1.16]} color={spring ? "#d2c6af" : "#8c9c9a"} />
-    <Box position={[4.87, 2.82, -0.54]} size={[0.035, 0.57, 0.94]} color={spring ? "#80735f" : "#465d67"} />
-    {[-0.84, -0.55, -0.26].map((z) => <Box key={z} position={[4.9, 2.82, z]} size={[0.045, 0.5, 0.015]} color={spring ? "#b09e83" : "#8ea19f"} />)}
-    <Box position={[4.55, 5.48, -0.55]} size={[0.13, 0.27, 7.45]} color="#4a5d65" />
-    <group position={[4.65, 1.5, 1.25]} rotation={[0, Math.PI / 2, 0]}>
-      <Box size={[1.3, 1.8, 0.09]} color={spring ? "#9b8167" : "#2b566e"} emissive={spring ? "#b99a74" : "#327ca4"} intensity={spring ? 0.06 : 0.18} />
-      <Box position={[0, 0, 0.055]} size={[1.1, 1.56, 0.03]} color="#f2dfad" emissive="#f2dfad" intensity={spring ? 0.04 : 0.16} />
-      <Label text="24 HOURS" position={[0, 0.4, 0.078]} width={1.03} height={0.28} color={spring ? "#80664e" : "#28779e"} fontSize={67} />
-      <Label text="あたたかな夜" position={[0, -0.2, 0.078]} width={1.03} height={0.3} color="#766557" fontSize={63} />
-    </group>
   </group>;
 }
 
 function SpringExteriorWalls({ active, autumn = false }: { active: boolean; autumn?: boolean }) {
   return <group visible={active}>
-    {[-1, 1].map((side) => <Box key={side} position={[side * 4.65, 2.7, -0.5]} size={[0.055, 5.3, 7.2]} color="#f8f9f7" emissive={autumn ? "#e8b47f" : "#f8f9f7"} intensity={autumn ? 0.36 : 0.42} roughness={0.9} />)}
+    {[-1, 1].map((side) => <MatteWall key={side} position={[side * 4.65, 2.7, -0.5]} size={[0.055, 5.3, 7.2]} color="#f8f9f7" emissive={autumn ? "#e8b47f" : "#f8f9f7"} intensity={autumn ? 0.36 : 0.42} />)}
   </group>;
 }
 
-function Rooftop({ spring, autumn = false }: { spring: boolean; autumn?: boolean }) {
+function Rooftop({ spring, winter, autumn = false }: { spring: boolean; winter: boolean; autumn?: boolean }) {
   return <group>
-    <Box position={[0, 5.55, -0.47]} size={[9.55, 0.26, 7.65]} color={spring ? "#69777d" : "#3c5360"} emissive={autumn ? "#be7d4c" : undefined} intensity={autumn ? 0.1 : 0} roughness={spring ? 0.75 : 0.28} outline />
-    <Box position={[0, 5.75, -0.47]} size={[8.9, 0.14, 7.07]} color={spring ? "#a2a8a2" : "#536d73"} emissive={autumn ? "#cf9564" : undefined} intensity={autumn ? 0.1 : 0} />
+    <RefinedAsset file="roof-shell" snow={winter} color={spring ? "#69777d" : "#3c5360"} emissive={autumn ? "#be7d4c" : undefined} emissiveIntensity={autumn ? 0.1 : 0} fallback={<Box position={[0, 5.55, -0.47]} size={[9.55, 0.26, 7.65]} color={spring ? "#69777d" : "#3c5360"} roughness={0.78} />} />
+    <RefinedAsset file="roof-surface" snow={winter} color={spring ? "#a2a8a2" : "#536d73"} emissive={autumn ? "#cf9564" : undefined} emissiveIntensity={autumn ? 0.1 : 0} fallback={<Box position={[0, 5.75, -0.47]} size={[8.9, 0.14, 7.07]} color={spring ? "#a2a8a2" : "#536d73"} emissive={autumn ? "#cf9564" : undefined} intensity={autumn ? 0.1 : 0} />} />
+    <RefinedAsset file="roof-equipment" snow={winter} fallback={<>
     {[-3.8, 3.8].map((x) => <group key={x} position={[x, 5.82, -2.65]}>
       <Box position={[0, 0.34, 0]} size={[0.7, 0.68, 0.86]} color="#9aaba9" />
       {[0, 0.15, 0.3].map((y) => <Box key={y} position={[0, 0.08 + y, 0.44]} size={[0.52, 0.045, 0.015]} color="#47616a" />)}
@@ -1374,48 +1095,13 @@ function Rooftop({ spring, autumn = false }: { spring: boolean; autumn?: boolean
     <Tube from={[-3.8, 6.14, -2.65]} to={[-3.8, 6.14, -1.78]} radius={0.045} color="#9aaba9" />
     <Tube from={[-3.8, 6.14, -1.78]} to={[-2.8, 5.88, -1.78]} radius={0.045} color="#9aaba9" />
     <Box position={[0, 5.9, -2.1]} size={[2.7, 0.29, 1.33]} color="#38505c" />
+    </>} />
   </group>;
 }
 
-function SideAlley({ spring }: { spring: boolean }) {
+function SideAlley({ spring, winter }: { spring: boolean; winter: boolean }) {
   return <group>
-    <group position={[4.67, 0, -2.52]} rotation={[0, Math.PI / 2, 0]}>
-      <Box position={[0, 1.32, 0]} size={[1.24, 2.64, 0.08]} color={spring ? "#a39179" : "#607681"} />
-      <Box position={[0, 1.3, 0.065]} size={[0.96, 2.28, 0.035]} color={spring ? "#d1c1a8" : "#98a9a9"} />
-      <Box position={[0, 2.58, 0.075]} size={[1.2, 0.14, 0.1]} color={spring ? "#81705d" : "#344e5c"} />
-      <Box position={[0.3, 1.3, 0.089]} size={[0.08, 0.16, 0.015]} color={spring ? "#5d5a54" : "#415463"} />
-      <Box position={[0, 1.82, 0.089]} size={[0.42, 0.23, 0.012]} color={spring ? "#746e63" : "#49616c"} />
-      <Label text="STAFF" position={[0, 1.82, 0.101]} width={0.4} height={0.12} color="#e5e8d6" fontSize={62} />
-      <Box position={[0, 0.13, 0.18]} size={[1.45, 0.2, 0.76]} color={spring ? "#aaa396" : "#657b83"} />
-    </group>
-    <group position={[4.68, 0, -0.4]} rotation={[0, Math.PI / 2, 0]}>
-      <Box position={[0, 2.98, 0]} size={[1.43, 0.85, 0.12]} color={spring ? "#e0d1b8" : "#a9b7b6"} />
-      <Box position={[0, 2.98, 0.075]} size={[1.22, 0.63, 0.03]} color={spring ? "#77736a" : "#465c64"} />
-      {[-0.43, -0.23, -0.03, 0.17, 0.37].map((x) => <Box key={x} position={[x, 2.98, 0.096]} size={[0.04, 0.56, 0.01]} color={spring ? "#b6afa1" : "#94a9ac"} />)}
-      <Box position={[0, 3.52, 0]} size={[1.56, 0.09, 0.22]} color={spring ? "#666158" : "#384e58"} />
-    </group>
-    <Tube from={[4.73, 4.35, -3.6]} to={[4.73, 4.35, 1.7]} radius={0.052} color={spring ? "#b09d81" : "#82969a"} />
-    <Tube from={[4.73, 4.35, -3.6]} to={[4.73, 0.28, -3.6]} radius={0.052} color={spring ? "#b09d81" : "#82969a"} />
-    <Tube from={[4.73, 4.35, 1.7]} to={[4.73, 3.65, 1.7]} radius={0.052} color={spring ? "#b09d81" : "#82969a"} />
-    <Box position={[5.04, 3.55, -3.55]} size={[0.52, 0.42, 0.64]} color={spring ? "#e0d1b8" : "#98aaaa"} />
-    {[0, 0.17, 0.34].map((y) => <Box key={y} position={[5.31, 3.41 + y, -3.55]} size={[0.025, 0.045, 0.49]} color={spring ? "#898274" : "#526a72"} />)}
-    <group position={[6.1, 0.12, -1.0]}>
-      <Box position={[0, 0.34, 0]} size={[0.82, 0.68, 0.61]} color={spring ? "#99866e" : "#49616c"} />
-      <Box position={[0, 0.7, 0]} size={[0.9, 0.07, 0.67]} color={spring ? "#aaa294" : "#5b7782"} />
-      <Box position={[0.18, 0.99, -0.12]} size={[0.63, 0.51, 0.47]} color={spring ? "#cfbda3" : "#78949c"} />
-      <Box position={[0.18, 1.27, -0.12]} size={[0.69, 0.065, 0.52]} color={spring ? "#686259" : "#324b59"} />
-      <Box position={[-0.23, 0.34, 0.31]} size={[0.23, 0.37, 0.015]} color={spring ? "#e4dcc9" : "#c1d1c4"} />
-    </group>
-    <group position={[5.62, 0.12, -3.69]}>
-      <mesh position={[0, 0.27, 0]}><cylinderGeometry args={[0.25, 0.23, 0.54, 12]} /><meshStandardMaterial color={spring ? "#aa957a" : "#586a70"} emissive={spring ? "#9c815e" : "#000000"} emissiveIntensity={spring ? 0.15 : 0} /></mesh>
-      <mesh position={[0, 0.56, 0]}><cylinderGeometry args={[0.27, 0.27, 0.07, 12]} /><meshStandardMaterial color={spring ? "#bbb2a2" : "#a0aaa8"} /></mesh>
-      <Box position={[0.55, 0.43, 0]} size={[0.5, 0.74, 0.55]} color={spring ? "#ae997e" : "#607d83"} />
-      <Box position={[0.55, 0.82, 0]} size={[0.57, 0.06, 0.61]} color={spring ? "#615d56" : "#344c57"} />
-    </group>
-    {[[-6.7, -2.9], [-6.15, -2.6]].map(([x, z], i) => <group key={i} position={[x, 0.07, z]}>
-      <mesh position={[0, 0.28, 0]}><cylinderGeometry args={[0.21, 0.17, 0.57, 10]} /><meshStandardMaterial color="#ce895f" /></mesh>
-      <Box position={[0, 0.42, 0]} size={[0.36, 0.095, 0.36]} color="#eee0bb" />
-    </group>)}
+    <RefinedAsset file="side-alley" snow={winter} />
     <pointLight position={[6.1, 3.6, -0.35]} color={spring ? "#f5dfb8" : "#8cc6d1"} intensity={spring ? 0.18 : 4.2} distance={5.2} />
   </group>;
 }
@@ -1501,15 +1187,16 @@ function Scene(props: Props & { compact: boolean }) {
     <CameraController mode={props.mode} resetViewKey={props.resetViewKey} onViewReset={props.onViewReset} onEntered={props.onEntered} entryProgress={entryProgress} />
     <group position={[0, -0.37, 0]}>
       <EntryExterior mode={props.mode} entryProgress={entryProgress}>
-      <Street spring={warmSeason} rainy={summerRain} winter={winter} /><StreetProps spring={warmSeason} />
+      <Street spring={warmSeason} rainy={summerRain} winter={winter} />
+      {winterOutside && <WinterSnowbanks />}<StreetProps spring={warmSeason} winter={winter} />
       </EntryExterior>
       <Interior projects={props.projects} onSelect={props.onSelect} onCheckout={props.onCheckout} onProfile={props.onProfile} active={props.mode === "inside"} fitRoom={props.mode !== "outside"} loadProjects={props.preloadStage >= 1 || props.mode !== "outside"} loadCheckout={props.preloadStage >= 2 || props.mode !== "outside"} />
       <EntryExterior mode={props.mode} entryProgress={entryProgress}>
-      <Facade mode={props.mode} onEnter={props.onEnter} spring={warmSeason} rainy={summerRain} /><SpringExteriorWalls active={warmSeason && props.mode !== "inside"} autumn={autumn} /><Rooftop spring={warmSeason} autumn={autumn} /><SideAlley spring={warmSeason} />
-      <VendingMachine spring={warmSeason} /><Bicycle spring={warmSeason} /><EntranceProps spring={warmSeason} /><Drips active={summerRain} />
+      <Facade mode={props.mode} onEnter={props.onEnter} spring={warmSeason} rainy={summerRain} winter={winter} /><SpringExteriorWalls active={warmSeason && props.mode !== "inside"} autumn={autumn} /><Rooftop spring={warmSeason} winter={winter} autumn={autumn} /><SideAlley spring={warmSeason} winter={winter} />
+      <VendingMachine spring={warmSeason} winter={winter} /><RefinedAsset file="bicycle" snow={winter} /><RefinedAsset file="entrance" snow={winter} /><Drips active={summerRain} />
       <SpringLight active={warmSeason && props.mode !== "inside"} autumn={autumn} /><SpringSunbeam active={warmSeason && props.mode !== "inside"} autumn={autumn} />
       <SpringPetals active={spring && props.mode !== "inside"} compact={props.compact} /><AutumnLeaves active={autumn && props.mode !== "inside"} compact={props.compact} />
-      <WinterSnowflakes active={winterOutside} compact={props.compact} /><WinterSnowCover active={winterOutside} />
+      <WinterSnowflakes active={winterOutside} compact={props.compact} />
       <Rain active={summerRain} count={props.compact ? 100 : 180} />
       <RainImpacts active={summerRain} count={props.compact ? 100 : 180} />
       </EntryExterior>

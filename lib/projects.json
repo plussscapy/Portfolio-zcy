@@ -1,0 +1,602 @@
+[
+  {
+    "id": "project-1",
+    "number": "01",
+    "color": "#79c8df",
+    "ink": "#103b54",
+    "title": "作品 1 · 潮汐档案",
+    "subtitle": "社区气候数据产品",
+    "images": [
+      {
+        "id": "project-1-page-01",
+        "src": "/projects/after-hours/01.png",
+        "width": 1920,
+        "height": 1080,
+        "alt": "AFTER HOURS 概念示例 · 第 1 张"
+      },
+      {
+        "id": "project-1-page-02",
+        "src": "/projects/after-hours/02.png",
+        "width": 1920,
+        "height": 1080,
+        "alt": "AFTER HOURS 概念示例 · 第 2 张"
+      },
+      {
+        "id": "project-1-page-03",
+        "src": "/projects/after-hours/03.png",
+        "width": 1920,
+        "height": 1080,
+        "alt": "AFTER HOURS 概念示例 · 第 3 张"
+      },
+      {
+        "id": "project-1-page-04",
+        "src": "/projects/after-hours/04.png",
+        "width": 1920,
+        "height": 1080,
+        "alt": "AFTER HOURS 概念示例 · 第 4 张"
+      },
+      {
+        "id": "project-1-page-05",
+        "src": "/projects/after-hours/01.png",
+        "width": 1920,
+        "height": 1080,
+        "alt": "AFTER HOURS 概念示例 · 第 5 张"
+      },
+      {
+        "id": "project-1-page-06",
+        "src": "/projects/after-hours/02.png",
+        "width": 1920,
+        "height": 1080,
+        "alt": "AFTER HOURS 概念示例 · 第 6 张"
+      },
+      {
+        "id": "project-1-page-07",
+        "src": "/projects/after-hours/03.png",
+        "width": 1920,
+        "height": 1080,
+        "alt": "AFTER HOURS 概念示例 · 第 7 张"
+      },
+      {
+        "id": "project-1-page-08",
+        "src": "/projects/after-hours/04.png",
+        "width": 1920,
+        "height": 1080,
+        "alt": "AFTER HOURS 概念示例 · 第 8 张"
+      },
+      {
+        "id": "project-1-page-09",
+        "src": "/projects/after-hours/01.png",
+        "width": 1920,
+        "height": 1080,
+        "alt": "AFTER HOURS 概念示例 · 第 9 张"
+      },
+      {
+        "id": "project-1-page-10",
+        "src": "/projects/after-hours/02.png",
+        "width": 1920,
+        "height": 1080,
+        "alt": "AFTER HOURS 概念示例 · 第 10 张"
+      },
+      {
+        "id": "project-1-page-11",
+        "src": "/projects/after-hours/03.png",
+        "width": 1920,
+        "height": 1080,
+        "alt": "AFTER HOURS 概念示例 · 第 11 张"
+      },
+      {
+        "id": "project-1-page-12",
+        "src": "/projects/after-hours/04.png",
+        "width": 1920,
+        "height": 1080,
+        "alt": "AFTER HOURS 概念示例 · 第 12 张"
+      },
+      {
+        "id": "project-1-page-13",
+        "src": "/projects/after-hours/01.png",
+        "width": 1920,
+        "height": 1080,
+        "alt": "AFTER HOURS 概念示例 · 第 13 张"
+      },
+      {
+        "id": "project-1-page-14",
+        "src": "/projects/after-hours/02.png",
+        "width": 1920,
+        "height": 1080,
+        "alt": "AFTER HOURS 概念示例 · 第 14 张"
+      },
+      {
+        "id": "project-1-page-15",
+        "src": "/projects/after-hours/03.png",
+        "width": 1920,
+        "height": 1080,
+        "alt": "AFTER HOURS 概念示例 · 第 15 张"
+      },
+      {
+        "id": "project-1-page-16",
+        "src": "/projects/after-hours/04.png",
+        "width": 1920,
+        "height": 1080,
+        "alt": "AFTER HOURS 概念示例 · 第 16 张"
+      },
+      {
+        "id": "project-1-page-17",
+        "src": "/projects/after-hours/01.png",
+        "width": 1920,
+        "height": 1080,
+        "alt": "AFTER HOURS 概念示例 · 第 17 张"
+      },
+      {
+        "id": "project-1-page-18",
+        "src": "/projects/after-hours/02.png",
+        "width": 1920,
+        "height": 1080,
+        "alt": "AFTER HOURS 概念示例 · 第 18 张"
+      },
+      {
+        "id": "project-1-page-19",
+        "src": "/projects/after-hours/03.png",
+        "width": 1920,
+        "height": 1080,
+        "alt": "AFTER HOURS 概念示例 · 第 19 张"
+      },
+      {
+        "id": "project-1-page-20",
+        "src": "/projects/after-hours/05.png",
+        "width": 1920,
+        "height": 1080,
+        "alt": "AFTER HOURS 概念示例 · 第 20 张"
+      }
+    ]
+  },
+  {
+    "id": "project-2",
+    "number": "02",
+    "color": "#f1c45b",
+    "ink": "#5a3911",
+    "title": "作品 2 · 夜航电台",
+    "subtitle": "情境化声音交互",
+    "images": [
+      {
+        "id": "project-2-page-01",
+        "src": "/projects/after-hours/01.png",
+        "width": 1920,
+        "height": 1080,
+        "alt": "AFTER HOURS 概念示例 · 第 1 张"
+      },
+      {
+        "id": "project-2-page-02",
+        "src": "/projects/after-hours/02.png",
+        "width": 1920,
+        "height": 1080,
+        "alt": "AFTER HOURS 概念示例 · 第 2 张"
+      },
+      {
+        "id": "project-2-page-03",
+        "src": "/projects/after-hours/03.png",
+        "width": 1920,
+        "height": 1080,
+        "alt": "AFTER HOURS 概念示例 · 第 3 张"
+      },
+      {
+        "id": "project-2-page-04",
+        "src": "/projects/after-hours/04.png",
+        "width": 1920,
+        "height": 1080,
+        "alt": "AFTER HOURS 概念示例 · 第 4 张"
+      },
+      {
+        "id": "project-2-page-05",
+        "src": "/projects/after-hours/01.png",
+        "width": 1920,
+        "height": 1080,
+        "alt": "AFTER HOURS 概念示例 · 第 5 张"
+      },
+      {
+        "id": "project-2-page-06",
+        "src": "/projects/after-hours/02.png",
+        "width": 1920,
+        "height": 1080,
+        "alt": "AFTER HOURS 概念示例 · 第 6 张"
+      },
+      {
+        "id": "project-2-page-07",
+        "src": "/projects/after-hours/03.png",
+        "width": 1920,
+        "height": 1080,
+        "alt": "AFTER HOURS 概念示例 · 第 7 张"
+      },
+      {
+        "id": "project-2-page-08",
+        "src": "/projects/after-hours/04.png",
+        "width": 1920,
+        "height": 1080,
+        "alt": "AFTER HOURS 概念示例 · 第 8 张"
+      },
+      {
+        "id": "project-2-page-09",
+        "src": "/projects/after-hours/01.png",
+        "width": 1920,
+        "height": 1080,
+        "alt": "AFTER HOURS 概念示例 · 第 9 张"
+      },
+      {
+        "id": "project-2-page-10",
+        "src": "/projects/after-hours/02.png",
+        "width": 1920,
+        "height": 1080,
+        "alt": "AFTER HOURS 概念示例 · 第 10 张"
+      },
+      {
+        "id": "project-2-page-11",
+        "src": "/projects/after-hours/03.png",
+        "width": 1920,
+        "height": 1080,
+        "alt": "AFTER HOURS 概念示例 · 第 11 张"
+      },
+      {
+        "id": "project-2-page-12",
+        "src": "/projects/after-hours/04.png",
+        "width": 1920,
+        "height": 1080,
+        "alt": "AFTER HOURS 概念示例 · 第 12 张"
+      },
+      {
+        "id": "project-2-page-13",
+        "src": "/projects/after-hours/01.png",
+        "width": 1920,
+        "height": 1080,
+        "alt": "AFTER HOURS 概念示例 · 第 13 张"
+      },
+      {
+        "id": "project-2-page-14",
+        "src": "/projects/after-hours/02.png",
+        "width": 1920,
+        "height": 1080,
+        "alt": "AFTER HOURS 概念示例 · 第 14 张"
+      },
+      {
+        "id": "project-2-page-15",
+        "src": "/projects/after-hours/03.png",
+        "width": 1920,
+        "height": 1080,
+        "alt": "AFTER HOURS 概念示例 · 第 15 张"
+      },
+      {
+        "id": "project-2-page-16",
+        "src": "/projects/after-hours/04.png",
+        "width": 1920,
+        "height": 1080,
+        "alt": "AFTER HOURS 概念示例 · 第 16 张"
+      },
+      {
+        "id": "project-2-page-17",
+        "src": "/projects/after-hours/01.png",
+        "width": 1920,
+        "height": 1080,
+        "alt": "AFTER HOURS 概念示例 · 第 17 张"
+      },
+      {
+        "id": "project-2-page-18",
+        "src": "/projects/after-hours/02.png",
+        "width": 1920,
+        "height": 1080,
+        "alt": "AFTER HOURS 概念示例 · 第 18 张"
+      },
+      {
+        "id": "project-2-page-19",
+        "src": "/projects/after-hours/03.png",
+        "width": 1920,
+        "height": 1080,
+        "alt": "AFTER HOURS 概念示例 · 第 19 张"
+      },
+      {
+        "id": "project-2-page-20",
+        "src": "/projects/after-hours/05.png",
+        "width": 1920,
+        "height": 1080,
+        "alt": "AFTER HOURS 概念示例 · 第 20 张"
+      }
+    ]
+  },
+  {
+    "id": "project-3",
+    "number": "03",
+    "color": "#f08368",
+    "ink": "#54251d",
+    "title": "作品 3 · 慢行地图",
+    "subtitle": "城市步行探索工具",
+    "images": [
+      {
+        "id": "project-3-page-01",
+        "src": "/projects/after-hours/01.png",
+        "width": 1920,
+        "height": 1080,
+        "alt": "AFTER HOURS 概念示例 · 第 1 张"
+      },
+      {
+        "id": "project-3-page-02",
+        "src": "/projects/after-hours/02.png",
+        "width": 1920,
+        "height": 1080,
+        "alt": "AFTER HOURS 概念示例 · 第 2 张"
+      },
+      {
+        "id": "project-3-page-03",
+        "src": "/projects/after-hours/03.png",
+        "width": 1920,
+        "height": 1080,
+        "alt": "AFTER HOURS 概念示例 · 第 3 张"
+      },
+      {
+        "id": "project-3-page-04",
+        "src": "/projects/after-hours/04.png",
+        "width": 1920,
+        "height": 1080,
+        "alt": "AFTER HOURS 概念示例 · 第 4 张"
+      },
+      {
+        "id": "project-3-page-05",
+        "src": "/projects/after-hours/01.png",
+        "width": 1920,
+        "height": 1080,
+        "alt": "AFTER HOURS 概念示例 · 第 5 张"
+      },
+      {
+        "id": "project-3-page-06",
+        "src": "/projects/after-hours/02.png",
+        "width": 1920,
+        "height": 1080,
+        "alt": "AFTER HOURS 概念示例 · 第 6 张"
+      },
+      {
+        "id": "project-3-page-07",
+        "src": "/projects/after-hours/03.png",
+        "width": 1920,
+        "height": 1080,
+        "alt": "AFTER HOURS 概念示例 · 第 7 张"
+      },
+      {
+        "id": "project-3-page-08",
+        "src": "/projects/after-hours/04.png",
+        "width": 1920,
+        "height": 1080,
+        "alt": "AFTER HOURS 概念示例 · 第 8 张"
+      },
+      {
+        "id": "project-3-page-09",
+        "src": "/projects/after-hours/01.png",
+        "width": 1920,
+        "height": 1080,
+        "alt": "AFTER HOURS 概念示例 · 第 9 张"
+      },
+      {
+        "id": "project-3-page-10",
+        "src": "/projects/after-hours/02.png",
+        "width": 1920,
+        "height": 1080,
+        "alt": "AFTER HOURS 概念示例 · 第 10 张"
+      },
+      {
+        "id": "project-3-page-11",
+        "src": "/projects/after-hours/03.png",
+        "width": 1920,
+        "height": 1080,
+        "alt": "AFTER HOURS 概念示例 · 第 11 张"
+      },
+      {
+        "id": "project-3-page-12",
+        "src": "/projects/after-hours/04.png",
+        "width": 1920,
+        "height": 1080,
+        "alt": "AFTER HOURS 概念示例 · 第 12 张"
+      },
+      {
+        "id": "project-3-page-13",
+        "src": "/projects/after-hours/01.png",
+        "width": 1920,
+        "height": 1080,
+        "alt": "AFTER HOURS 概念示例 · 第 13 张"
+      },
+      {
+        "id": "project-3-page-14",
+        "src": "/projects/after-hours/02.png",
+        "width": 1920,
+        "height": 1080,
+        "alt": "AFTER HOURS 概念示例 · 第 14 张"
+      },
+      {
+        "id": "project-3-page-15",
+        "src": "/projects/after-hours/03.png",
+        "width": 1920,
+        "height": 1080,
+        "alt": "AFTER HOURS 概念示例 · 第 15 张"
+      },
+      {
+        "id": "project-3-page-16",
+        "src": "/projects/after-hours/04.png",
+        "width": 1920,
+        "height": 1080,
+        "alt": "AFTER HOURS 概念示例 · 第 16 张"
+      },
+      {
+        "id": "project-3-page-17",
+        "src": "/projects/after-hours/01.png",
+        "width": 1920,
+        "height": 1080,
+        "alt": "AFTER HOURS 概念示例 · 第 17 张"
+      },
+      {
+        "id": "project-3-page-18",
+        "src": "/projects/after-hours/02.png",
+        "width": 1920,
+        "height": 1080,
+        "alt": "AFTER HOURS 概念示例 · 第 18 张"
+      },
+      {
+        "id": "project-3-page-19",
+        "src": "/projects/after-hours/03.png",
+        "width": 1920,
+        "height": 1080,
+        "alt": "AFTER HOURS 概念示例 · 第 19 张"
+      },
+      {
+        "id": "project-3-page-20",
+        "src": "/projects/after-hours/05.png",
+        "width": 1920,
+        "height": 1080,
+        "alt": "AFTER HOURS 概念示例 · 第 20 张"
+      }
+    ]
+  },
+  {
+    "id": "project-4",
+    "number": "04",
+    "color": "#a9d180",
+    "ink": "#294718",
+    "title": "作品 4 · 公共厨房",
+    "subtitle": "社区食物共享服务",
+    "images": [
+      {
+        "id": "project-4-page-01",
+        "src": "/projects/after-hours/01.png",
+        "width": 1920,
+        "height": 1080,
+        "alt": "AFTER HOURS 概念示例 · 第 1 张"
+      },
+      {
+        "id": "project-4-page-02",
+        "src": "/projects/after-hours/02.png",
+        "width": 1920,
+        "height": 1080,
+        "alt": "AFTER HOURS 概念示例 · 第 2 张"
+      },
+      {
+        "id": "project-4-page-03",
+        "src": "/projects/after-hours/03.png",
+        "width": 1920,
+        "height": 1080,
+        "alt": "AFTER HOURS 概念示例 · 第 3 张"
+      },
+      {
+        "id": "project-4-page-04",
+        "src": "/projects/after-hours/04.png",
+        "width": 1920,
+        "height": 1080,
+        "alt": "AFTER HOURS 概念示例 · 第 4 张"
+      },
+      {
+        "id": "project-4-page-05",
+        "src": "/projects/after-hours/01.png",
+        "width": 1920,
+        "height": 1080,
+        "alt": "AFTER HOURS 概念示例 · 第 5 张"
+      },
+      {
+        "id": "project-4-page-06",
+        "src": "/projects/after-hours/02.png",
+        "width": 1920,
+        "height": 1080,
+        "alt": "AFTER HOURS 概念示例 · 第 6 张"
+      },
+      {
+        "id": "project-4-page-07",
+        "src": "/projects/after-hours/03.png",
+        "width": 1920,
+        "height": 1080,
+        "alt": "AFTER HOURS 概念示例 · 第 7 张"
+      },
+      {
+        "id": "project-4-page-08",
+        "src": "/projects/after-hours/04.png",
+        "width": 1920,
+        "height": 1080,
+        "alt": "AFTER HOURS 概念示例 · 第 8 张"
+      },
+      {
+        "id": "project-4-page-09",
+        "src": "/projects/after-hours/01.png",
+        "width": 1920,
+        "height": 1080,
+        "alt": "AFTER HOURS 概念示例 · 第 9 张"
+      },
+      {
+        "id": "project-4-page-10",
+        "src": "/projects/after-hours/02.png",
+        "width": 1920,
+        "height": 1080,
+        "alt": "AFTER HOURS 概念示例 · 第 10 张"
+      },
+      {
+        "id": "project-4-page-11",
+        "src": "/projects/after-hours/03.png",
+        "width": 1920,
+        "height": 1080,
+        "alt": "AFTER HOURS 概念示例 · 第 11 张"
+      },
+      {
+        "id": "project-4-page-12",
+        "src": "/projects/after-hours/04.png",
+        "width": 1920,
+        "height": 1080,
+        "alt": "AFTER HOURS 概念示例 · 第 12 张"
+      },
+      {
+        "id": "project-4-page-13",
+        "src": "/projects/after-hours/01.png",
+        "width": 1920,
+        "height": 1080,
+        "alt": "AFTER HOURS 概念示例 · 第 13 张"
+      },
+      {
+        "id": "project-4-page-14",
+        "src": "/projects/after-hours/02.png",
+        "width": 1920,
+        "height": 1080,
+        "alt": "AFTER HOURS 概念示例 · 第 14 张"
+      },
+      {
+        "id": "project-4-page-15",
+        "src": "/projects/after-hours/03.png",
+        "width": 1920,
+        "height": 1080,
+        "alt": "AFTER HOURS 概念示例 · 第 15 张"
+      },
+      {
+        "id": "project-4-page-16",
+        "src": "/projects/after-hours/04.png",
+        "width": 1920,
+        "height": 1080,
+        "alt": "AFTER HOURS 概念示例 · 第 16 张"
+      },
+      {
+        "id": "project-4-page-17",
+        "src": "/projects/after-hours/01.png",
+        "width": 1920,
+        "height": 1080,
+        "alt": "AFTER HOURS 概念示例 · 第 17 张"
+      },
+      {
+        "id": "project-4-page-18",
+        "src": "/projects/after-hours/02.png",
+        "width": 1920,
+        "height": 1080,
+        "alt": "AFTER HOURS 概念示例 · 第 18 张"
+      },
+      {
+        "id": "project-4-page-19",
+        "src": "/projects/after-hours/03.png",
+        "width": 1920,
+        "height": 1080,
+        "alt": "AFTER HOURS 概念示例 · 第 19 张"
+      },
+      {
+        "id": "project-4-page-20",
+        "src": "/projects/after-hours/05.png",
+        "width": 1920,
+        "height": 1080,
+        "alt": "AFTER HOURS 概念示例 · 第 20 张"
+      }
+    ]
+  }
+]

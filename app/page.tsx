@@ -5,6 +5,8 @@ import { ArrowLeft, BriefcaseBusiness, Check, ChevronDown, CloudRain, Download, 
 import { ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import RainyStoreScene from "@/components/RainyStoreScene";
+import ProjectImageViewer from "@/components/ProjectImageViewer";
+import { projects, type Project } from "@/lib/projects";
 import { SeasonAmbience } from "@/lib/season-ambience";
 
 type SceneMode = "outside" | "entering" | "inside";
@@ -22,55 +24,6 @@ const seasonTracks: Record<Season, { src: string; title: string }> = {
   winter: { src: "/audio/winter-ambient-instrumental.mp3", title: "Winter Ambient Instrumental" },
 };
 const loadingMessages = ["正在点亮店面", "正在摆放展品", "正在准备收银台", "今日营业中"] as const;
-type Project = {
-  id: string;
-  number: string;
-  color: string;
-  ink: string;
-  title: string;
-  subtitle: string;
-  intro: string;
-  role: string;
-  challenge: string;
-  process: string[];
-  results: string[];
-};
-
-const projects: Project[] = [
-  {
-    id: "project-1", number: "01", color: "#79c8df", ink: "#103b54", title: "作品 1 · 潮汐档案", subtitle: "社区气候数据产品",
-    intro: "把抽象的海平面与气候数据，转换成社区居民能理解、能讨论的日常故事。",
-    role: "产品策略 / 交互设计 / 数据可视化",
-    challenge: "原始数据专业且抽象，普通用户难以建立与自己生活的关联。",
-    process: ["访谈18位沿海居民", "构建时间与地点双维叙事", "制作可交互数据原型"],
-    results: ["数据阅读路径更清晰", "支持社区讨论会展示", "产出一套可复用的视觉语言"],
-  },
-  {
-    id: "project-2", number: "02", color: "#f1c45b", ink: "#5a3911", title: "作品 2 · 夜航电台", subtitle: "情境化声音交互",
-    intro: "一个会根据时间、天气和听众情绪生成节目单的在线电台实验。",
-    role: "概念设计 / 声音交互 / 创意前端",
-    challenge: "传统音频产品依赖列表和封面，缺少空间感与陪伴感。",
-    process: ["设计时间与情绪参数", "建立声音场景原型", "用生成式图形响应音频"],
-    results: ["形成非列表式收听体验", "支持连续播放和情绪切换", "完成展览版交互装置"],
-  },
-  {
-    id: "project-3", number: "03", color: "#f08368", ink: "#54251d", title: "作品 3 · 慢行地图", subtitle: "城市步行探索工具",
-    intro: "不推荐最快的路，只推荐最值得走的路。让日常通勤也能变成一次小旅行。",
-    role: "用户研究 / 服务设计 / 移动端原型",
-    challenge: "导航工具优化时间，却很少考虑步行者对舒适、安全与有趣的需求。",
-    process: ["记录27条城市步行路线", "建立庇荫、安静与发现度指标", "测试三种路线表达方式"],
-    results: ["提供三类情境路线", "用户可收藏途中发现", "沉淀城市慢行数据"],
-  },
-  {
-    id: "project-4", number: "04", color: "#a9d180", ink: "#294718", title: "作品 4 · 公共厨房", subtitle: "社区食物共享服务",
-    intro: "用预约、共享菜单与社区活动，让闲置的厨房设施成为人与人连接的场所。",
-    role: "服务设计 / 信息架构 / 设计系统",
-    challenge: "场地、设备、活动与使用者之间存在复杂的预约和安全规则。",
-    process: ["梳理六类使用者旅程", "统一场地与设备状态", "建立从预约到离场的服务蓝图"],
-    results: ["减少预约信息反复确认", "支持活动与日常预约", "统一管理端与用户端状态"],
-  },
-];
-
 const cashierStyle = { skin: "#d9a57e", hair: "#283c43", shirt: "#eaf5f5", apron: "#4a91b7", accent: "#f6ca54" };
 
 function usePointerCursor(active: boolean) {
@@ -226,51 +179,6 @@ function StoreCanvas(props: { mode: SceneMode; onEnter: () => void; onSelect: (i
     <ambientLight intensity={1.45} /><directionalLight position={[4, 9, 8]} intensity={1.7} color="#fff1c9" />
     <CameraRig mode={props.mode} /><StoreWorld {...props} />
   </Canvas>;
-}
-
-function ProjectModal({ project, onClose }: { project: Project; onClose: () => void }) {
-  const [opened, setOpened] = useState(false);
-  const [activePage, setActivePage] = useState(1);
-  useEffect(() => { const timer = window.setTimeout(() => setOpened(true), 460); return () => window.clearTimeout(timer); }, []);
-  return <div className="modal-backdrop project-modal" role="dialog" aria-modal="true" aria-label={project.title}>
-    <button className="modal-close" onClick={onClose} aria-label="关闭作品"><X size={19} /></button>
-    <div className={`project-stage ${opened ? "is-open" : ""}`} style={{ "--project": project.color, "--project-ink": project.ink } as React.CSSProperties}>
-      <div className="project-pack"><span>PROJECT</span><strong>{project.number}</strong></div>
-      <article className="project-sheet" onScroll={(event) => {
-        const sheet = event.currentTarget;
-        setActivePage(Math.min(6, Math.max(1, Math.floor((sheet.scrollTop + sheet.clientHeight * 0.48) / sheet.clientHeight) + 1)));
-      }}>
-        <nav className="page-rail" aria-label={`当前第 ${activePage} 页，共 6 页`}>{[1, 2, 3, 4, 5, 6].map((page) => <span className={page === activePage ? "active" : ""} key={page}>{String(page).padStart(2, "0")}</span>)}</nav>
-        <section className="case-page cover-page">
-          <i className="page-number">01 / 06</i>
-          <header><span>CASE STUDY / {project.number}</span><h2>{project.title}</h2><p>{project.subtitle}</p></header>
-          <div className="project-hero"><b>{project.number}</b><span>{project.intro}</span></div>
-        </section>
-        <section className="case-page brief-page">
-          <i className="page-number">02 / 06</i><small>CONTEXT</small><h3>项目背景</h3><p>{project.challenge}</p>
-          <div className="project-meta"><div><b>ROLE</b><span>{project.role}</span></div><div><b>FORMAT</b><span>Research / Prototype / Visual</span></div></div>
-        </section>
-        <section className="case-page research-page">
-          <i className="page-number">03 / 06</i><small>RESEARCH</small><h3>研究与洞察</h3>
-          <div className="insight-grid">{project.process.map((step, index) => <article key={step}><b>0{index + 1}</b><p>{step}</p></article>)}</div>
-          <div className="wide-visual"><span>RESEARCH MAP</span></div>
-        </section>
-        <section className="case-page system-page">
-          <i className="page-number">04 / 06</i><small>DESIGN SYSTEM</small><h3>方案结构</h3><p>将关键信息组织成一条可理解、可探索、可反复访问的体验路径。</p>
-          <div className="system-map"><span>DISCOVER</span><i /> <span>UNDERSTAND</span><i /> <span>ACT</span></div>
-        </section>
-        <section className="case-page detail-page">
-          <i className="page-number">05 / 06</i><small>SELECTED SCREENS</small><h3>界面与细节</h3>
-          <div className="visual-pair"><div><span>01</span></div><div><span>02</span></div><div><span>03</span></div></div>
-        </section>
-        <section className="case-page result-section">
-          <i className="page-number">06 / 06</i><small>OUTCOME</small><h3>阶段成果</h3><ul>{project.results.map((result) => <li key={result}>{result}</li>)}</ul>
-          <div className="closing-mark">THANKS FOR VIEWING <b>{project.number}</b></div>
-        </section>
-        <footer>MONDAY MART · PROJECT {project.number}</footer>
-      </article>
-    </div>
-  </div>;
 }
 
 function ProfileModal({ onClose }: { onClose: () => void }) {
@@ -555,7 +463,7 @@ export default function Home() {
         {mode === "inside" && <span className="inside-hint"><MousePointer2 size={14} /> 点击店员看简介 · 点击展品看作品 · 点击收银台查看联系方式</span>}
       </div>
     </section>
-    {selected && <ProjectModal project={selected} onClose={() => setSelected(null)} />}{contactOpen && <ContactReceipt onClose={() => setContactOpen(false)} />}{profileOpen && <ProfileModal onClose={() => setProfileOpen(false)} />}
+    {selected && <ProjectImageViewer key={selected.id} project={selected} onClose={() => setSelected(null)} />}{contactOpen && <ContactReceipt onClose={() => setContactOpen(false)} />}{profileOpen && <ProfileModal onClose={() => setProfileOpen(false)} />}
     {mobileNoticeOpen && <MobileViewNotice onClose={() => setMobileNoticeOpen(false)} />}
     {loading && <div className={`entry-loader ${loadingFinishing ? "finishing" : ""}`} role="status" aria-label="正在准备便利店场景" aria-live="polite">
       <div className="entry-loader-content">
