@@ -1,11 +1,12 @@
 "use client";
 
 import { Canvas, ThreeEvent, useFrame, useLoader, useThree } from "@react-three/fiber";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
-import { ReactNode, Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { ReactNode, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
-import { RefinedAsset } from "./RefinedStoreAssets";
+import { RefinedAsset, storeModelUrl } from "./RefinedStoreAssets";
 import { MatteWall } from "./MatteWall";
 import { WinterSnowbanks } from "./WinterSnowbanks";
 import { StoreLighting } from "./StoreLighting";
@@ -15,7 +16,7 @@ import { advanceEntryTime, createEntryPath, entryDistanceAtTime, ENTRY_END, ENTR
 
 type Mode = "outside" | "entering" | "inside";
 type Season = "spring" | "summer" | "autumn" | "winter";
-type Props = { mode: Mode; season: Season; resetViewKey: number; preloadStage: 0 | 1 | 2; onEnter: () => void; onViewReset: () => boolean; onEntered: () => void; onLightningFlash: () => void; onSelect: (project: Project) => void; onCheckout: () => void; onProfile: () => void; projects: Project[] };
+type Props = { mode: Mode; season: Season; resetViewKey: number; onEnter: () => void; onViewReset: () => boolean; onEntered: () => void; onExteriorProgress: (value: number) => void; onExteriorReady: () => void; onInteriorReady: () => void; onLightningFlash: () => void; onSelect: (project: Project) => void; onCheckout: () => void; onProfile: () => void; projects: Project[] };
 
 const navy = "#152b38";
 const blue = "#4d93bd";
@@ -27,7 +28,7 @@ function Box({ position = [0, 0, 0], size, color, emissive, intensity = 0, rough
 }) {
   return <mesh position={position} rotation={rotation} castShadow receiveShadow>
     <boxGeometry args={size} />
-    <meshStandardMaterial color={color} emissive={emissive || color} emissiveIntensity={intensity} roughness={roughness} metalness={metalness} transparent={opacity < 1} opacity={opacity} onUpdate={(material) => { material.needsUpdate = true; }} />
+    <meshStandardMaterial color={color} emissive={emissive || color} emissiveIntensity={intensity} roughness={roughness} metalness={metalness} transparent={opacity < 1} opacity={opacity} />
     {outline && <lineSegments><edgesGeometry args={[new THREE.BoxGeometry(...size)]} /><lineBasicMaterial color="#142936" transparent opacity={0.65} /></lineSegments>}
     {children}
   </mesh>;
@@ -87,7 +88,7 @@ function Tube({ from, to, radius = 0.025, color = trim, emissive, intensity = 0 
   return <mesh position={center} quaternion={rotation}><cylinderGeometry args={[radius, radius, direction.length(), 8]} /><meshStandardMaterial color={color} emissive={emissive || color} emissiveIntensity={intensity} /></mesh>;
 }
 
-function CameraController({ mode, resetViewKey, onViewReset, onEntered, entryProgress }: { mode: Mode; resetViewKey: number; onViewReset: () => boolean; onEntered: () => void; entryProgress: { current: number } }) {
+function CameraController({ mode, resetViewKey, onViewReset, onEntered, entryProgress, doorway, onFrameReport }: { mode: Mode; resetViewKey: number; onViewReset: () => boolean; onEntered: () => void; entryProgress: { current: number }; doorway: THREE.Group; onFrameReport?: (report: string) => void }) {
   const { camera, gl, size } = useThree();
   const portrait = size.width / size.height < 1.45;
   const mobile = size.width <= 720;
@@ -96,6 +97,7 @@ function CameraController({ mode, resetViewKey, onViewReset, onEntered, entryPro
   const responsiveInside = useMemo(() => interiorCameraPosition(size.width, size.height), [size.width, size.height]);
   // Fit the 18-unit street base, whose front edge is closer than the shop.
   const outsideFov = THREE.MathUtils.radToDeg(2 * Math.atan(Math.tan(THREE.MathUtils.degToRad(58 / 2)) * Math.max(1, 1.25 / (size.width / size.height))));
+  const viewport = useMemo(() => gl.domElement.closest<HTMLElement>(".scene-viewport"), [gl]);
   const entryFov = useRef(58);
   const controls = useRef<OrbitControls | null>(null);
   const entryCurve = useRef<THREE.CatmullRomCurve3 | null>(null);
@@ -103,6 +105,7 @@ function CameraController({ mode, resetViewKey, onViewReset, onEntered, entryPro
   const entryRotation = useRef(new THREE.Quaternion());
   const elapsed = useRef(0);
   const entryFirstFrame = useRef(true);
+  const frameIntervals = useRef<number[]>([]);
   const completed = useRef(false);
   const lastResetKey = useRef(0);
   const resetStartedAt = useRef(-1);
@@ -142,6 +145,7 @@ function CameraController({ mode, resetViewKey, onViewReset, onEntered, entryPro
       entryTiming.current = makeEntryTiming(entryCurve.current);
       entryRotation.current.copy(camera.quaternion);
       entryFirstFrame.current = true;
+      frameIntervals.current = [];
       elapsed.current = 0; completed.current = false;
       if (controls.current) controls.current.enabled = false;
     }
@@ -171,10 +175,14 @@ function CameraController({ mode, resetViewKey, onViewReset, onEntered, entryPro
     controls.current.enabled = false;
   }, [resetViewKey, mode, camera, outside, outsideTarget, resetFromPosition, resetFromTarget]);
 
+  useEffect(() => {
+    if (mode !== "entering") viewport?.style.setProperty("--room-edge-opacity", mode === "inside" && mobile ? ".35" : "1");
+  }, [viewport, mobile, mode]);
+
   useFrame((_, frameDelta) => {
     if (mode === "outside") {
       entryProgress.current = 0;
-      gl.domElement.closest<HTMLElement>(".scene-viewport")?.style.setProperty("--room-edge-opacity", "1");
+      doorway.visible = true;
       if (camera instanceof THREE.PerspectiveCamera && camera.fov !== outsideFov) { camera.fov = outsideFov; camera.updateProjectionMatrix(); }
       if (resetStartedAt.current >= 0 && controls.current) {
         const progress = resetDuration.current === 0 ? 1 : Math.min(1, (performance.now() - resetStartedAt.current) / resetDuration.current);
@@ -205,11 +213,13 @@ function CameraController({ mode, resetViewKey, onViewReset, onEntered, entryPro
       if (entryFirstFrame.current) {
         entryFirstFrame.current = false;
       } else {
+        if (onFrameReport) frameIntervals.current.push(frameDelta * 1000);
         elapsed.current = advanceEntryTime(elapsed.current, frameDelta, entryTiming.current.duration);
       }
       const distance = entryDistanceAtTime(entryTiming.current, elapsed.current);
       entryProgress.current = distance;
-      gl.domElement.closest<HTMLElement>(".scene-viewport")?.style.setProperty("--room-edge-opacity", String(mobile ? 1 - 0.65 * smoothRange(0.55, 0.9, distance) : 1));
+      doorway.visible = entryTiming.current.duration - elapsed.current > 0.6;
+      if (mobile) viewport?.style.setProperty("--room-edge-opacity", String(1 - 0.65 * smoothRange(0.55, 0.9, distance)));
       entryCurve.current.getPointAt(distance, camera.position);
       lookTarget.set(
         // Look toward the right-side counter at the doorway; as the body
@@ -228,11 +238,19 @@ function CameraController({ mode, resetViewKey, onViewReset, onEntered, entryPro
       }
       if (elapsed.current >= entryTiming.current.duration && !completed.current) {
         camera.position.copy(responsiveInside); camera.quaternion.copy(insideRotation);
-        completed.current = true; onEntered();
+        completed.current = true;
+        if (onFrameReport && frameIntervals.current.length) {
+          const intervals = frameIntervals.current.sort((a, b) => a - b);
+          const slow = intervals.slice(-Math.ceil(intervals.length / 100));
+          const low = 1000 * slow.length / slow.reduce((sum, interval) => sum + interval, 0);
+          const p95 = intervals[Math.ceil(intervals.length * .95) - 1];
+          onFrameReport(`进店 ${intervals.length} 帧 · 1% low ${low.toFixed(1)} FPS · P95 ${p95.toFixed(1)} ms · ≥50 ms ${intervals.filter((interval) => interval >= 50).length} 帧 · DPR ${gl.getPixelRatio().toFixed(2)}`);
+        }
+        onEntered();
       }
     } else if (mode === "inside") {
       entryProgress.current = 1;
-      gl.domElement.closest<HTMLElement>(".scene-viewport")?.style.setProperty("--room-edge-opacity", mobile ? "0.35" : "1");
+      doorway.visible = false;
       camera.position.copy(responsiveInside); camera.quaternion.copy(insideRotation);
       if (camera instanceof THREE.PerspectiveCamera && camera.fov !== insideFov) { camera.fov = insideFov; camera.updateProjectionMatrix(); }
     }
@@ -246,20 +264,21 @@ function EntryExterior({ mode, entryProgress, children }: { mode: Mode; entryPro
   const originals = useRef(new WeakMap<THREE.Material, { opacity: number; transparent: boolean; depthWrite: boolean }>());
   const lastAlpha = useRef(1);
   useFrame(() => {
-    const alpha = mode === "entering" && size.width / size.height < 1.45 ? 1 - smoothRange(0.45, 0.8, entryProgress.current) : 1;
+    const narrowEntry = mode === "entering" && size.width / size.height < 1.45;
+    const alpha = narrowEntry ? 1 - smoothRange(0.45, 0.8, entryProgress.current) : 1;
     if (!group.current || alpha === lastAlpha.current) return;
     group.current.traverse((object) => {
       if (!(object instanceof THREE.Mesh || object instanceof THREE.Sprite || object instanceof THREE.Line)) return;
       const materials = Array.isArray(object.material) ? object.material : [object.material];
       for (const material of materials) {
+        if (material.userData.entryFade === "floor") continue;
         if (!originals.current.has(material)) originals.current.set(material, { opacity: material.opacity, transparent: material.transparent, depthWrite: material.depthWrite });
         const original = originals.current.get(material)!;
         const transparent = alpha < 1 || original.transparent;
-        const depthWrite = alpha < 1 ? false : original.depthWrite;
-        const recompile = material.transparent !== transparent || material.depthWrite !== depthWrite;
+        const recompile = material.transparent !== transparent;
         material.opacity = original.opacity * alpha;
         material.transparent = transparent;
-        material.depthWrite = depthWrite;
+        material.depthWrite = alpha < 1 ? false : original.depthWrite;
         if (recompile) material.needsUpdate = true;
       }
     });
@@ -714,21 +733,30 @@ function OriginalInteriorStock({ position, rotation = [0, 0, 0], length = 2.3, l
   </group>;
 }
 
-const giftFrontImages = ["/project-gift-front-01.png", "/project-gift-front-02.png", "/project-gift-front-03.png", "/project-gift-front-04.png"];
+const textureVariants = import.meta.glob<string>("../lib/store-textures/*.webp", { eager: true, query: "?url", import: "default" });
+// Choose once so rotating the device never replaces textures mid-transition.
+const textureTier = window.matchMedia("(max-width: 720px), (pointer: coarse) and (max-width: 1024px)").matches ? "compact" : "full";
+const sceneTexture = (name: string) => textureVariants[`../lib/store-textures/${name}-${textureTier}.webp`];
+const cashierTexture = sceneTexture("cashier-front-sprite");
+const giftFrontImages = ["01", "02", "03", "04"].map((number) => sceneTexture(`project-gift-front-${number}`));
 
 function GiftBoxImage({ image, color }: { image: string; color: string }) {
   const source = useLoader(THREE.TextureLoader, image);
   const front = useMemo(() => {
     const crop = giftLayout.frontCrop;
+    const image = source.image as HTMLImageElement;
+    const scaleX = image.naturalWidth / giftLayout.imageSize.width;
+    const scaleY = image.naturalHeight / giftLayout.imageSize.height;
     const canvas = document.createElement("canvas");
-    canvas.width = 1024;
-    canvas.height = 768;
+    canvas.width = textureTier === "compact" ? 512 : 1024;
+    canvas.height = canvas.width * 0.75;
     const ctx = canvas.getContext("2d")!;
     // The supplied PNG has transparent pixels around the cutout. Fill them with
     // the box color so a camera angle can never reveal black/empty front corners.
     ctx.fillStyle = color;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(source.image as CanvasImageSource, crop.x0, crop.y0, crop.x1 - crop.x0, crop.y1 - crop.y0, 0, 0, canvas.width, canvas.height);
+    ctx.drawImage(image, crop.x0 * scaleX, crop.y0 * scaleY, (crop.x1 - crop.x0) * scaleX,
+      (crop.y1 - crop.y0) * scaleY, 0, 0, canvas.width, canvas.height);
     const map = new THREE.CanvasTexture(canvas);
     map.colorSpace = THREE.SRGBColorSpace;
     map.anisotropy = 8;
@@ -935,7 +963,7 @@ function Cashier({ onProfile, active }: { onProfile: () => void; active: boolean
 }
 
 function SpriteCashier({ onProfile, active }: { onProfile: () => void; active: boolean }) {
-  const texture = useLoader(THREE.TextureLoader, "/cashier-front-sprite.png");
+  const texture = useLoader(THREE.TextureLoader, cashierTexture);
   useEffect(() => {
     texture.colorSpace = THREE.SRGBColorSpace;
     texture.anisotropy = 8;
@@ -987,7 +1015,7 @@ function CheckoutPlaceholder({ onCheckout, active }: { onCheckout: () => void; a
   </group>;
 }
 
-function Interior({ projects, onSelect, onCheckout, onProfile, active, fitRoom, loadProjects, loadCheckout }: Pick<Props, "projects" | "onSelect" | "onCheckout" | "onProfile"> & { active: boolean; fitRoom: boolean; loadProjects: boolean; loadCheckout: boolean }) {
+function Interior({ projects, onSelect, onCheckout, onProfile, active, fitRoom }: Pick<Props, "projects" | "onSelect" | "onCheckout" | "onProfile"> & { active: boolean; fitRoom: boolean }) {
   const { size, camera } = useThree();
   const extendedRoom = useRef<THREE.Group>(null);
   const mobileRoom = fitRoom && size.width <= 720;
@@ -1013,15 +1041,15 @@ function Interior({ projects, onSelect, onCheckout, onProfile, active, fitRoom, 
     <InteriorStock position={[-1.77, 0.14, -1.65]} length={2.35} />
     <group visible={!mobileRoom}><InteriorStock position={[-1.77, 0.14, 0.55]} length={2.35} front /></group>
     <InteriorStock position={[0.15, 0.14, -3.36]} length={1.65} levels={2} />
-    <ProjectDisplay projects={projects} onSelect={onSelect} active={active} loadImages={loadProjects} />
+    <ProjectDisplay projects={projects} onSelect={onSelect} active={active} loadImages />
     <Suspense fallback={null}><SpriteCashier onProfile={onProfile} active={active} /></Suspense>
-    {loadCheckout ? <Suspense fallback={<CheckoutPlaceholder onCheckout={onCheckout} active={active} />}><Checkout onCheckout={onCheckout} active={active} /></Suspense> : <CheckoutPlaceholder onCheckout={onCheckout} active={active} />}
+    <Suspense fallback={<CheckoutPlaceholder onCheckout={onCheckout} active={active} />}><Checkout onCheckout={onCheckout} active={active} /></Suspense>
     <StoreLighting />
     <group visible={!mobileRoom}><RefinedAsset file="magazine" /></group>
   </group>;
 }
 
-function SlidingDoors({ mode, onEnter }: { mode: Mode; onEnter: () => void }) {
+function SlidingDoors({ mode, onEnter, springGlass }: { mode: Mode; onEnter: () => void; springGlass: boolean }) {
   const left = useRef<THREE.Group>(null);
   const right = useRef<THREE.Group>(null);
   const wasEntering = useRef(false);
@@ -1042,7 +1070,7 @@ function SlidingDoors({ mode, onEnter }: { mode: Mode; onEnter: () => void }) {
   useEffect(() => { if (hovered && mode === "outside") document.body.style.cursor = "pointer"; return () => { document.body.style.cursor = "default"; }; }, [hovered, mode]);
   return <group position={[0, 0, 3.3]}>
     {[-1, 1].map((side) => <group key={side} ref={side < 0 ? left : right} position={[side * 0.55, 0, 0]}>
-      <Box position={[0, 1.87, 0]} size={[1.08, 3.52, 0.07]} color="#a3c6d0" opacity={0.16} roughness={0.1} metalness={0.3} />
+      <Box position={[0, 1.87, 0]} size={[1.08, 3.52, 0.07]} color={springGlass ? "#dce9e8" : "#a3c6d0"} opacity={springGlass ? 0.065 : 0.16} roughness={0.1} metalness={0.3} />
       <RefinedAsset file={side < 0 ? "door-left" : "door-right"} fallback={<>
       <Box position={[0, 3.61, 0.055]} size={[1.1, 0.055, 0.08]} color="#304d5b" />
       <Box position={[side * 0.52, 1.87, 0.055]} size={[0.055, 3.48, 0.08]} color="#304d5b" />
@@ -1058,14 +1086,19 @@ function SlidingDoors({ mode, onEnter }: { mode: Mode; onEnter: () => void }) {
   </group>;
 }
 
-function Facade({ mode, onEnter, spring, rainy, winter }: { mode: Mode; onEnter: () => void; spring: boolean; rainy: boolean; winter: boolean }) {
+const springWindowMaterials = {
+  "Reference glass": { color: "#dce9e8", opacity: 0.07 },
+  "Fixed sidelight clear glass": { color: "#dce9e8", opacity: 0.07 },
+};
+
+function Facade({ mode, onEnter, spring, springGlass, rainy, winter, doorway }: { mode: Mode; onEnter: () => void; spring: boolean; springGlass: boolean; rainy: boolean; winter: boolean; doorway: THREE.Group }) {
   const sign = useRef<THREE.Mesh>(null);
   // The warm-season front face receives little direct light. Give its white
   // lightbox a neutral luminance floor so tone mapping doesn't turn it gray;
   // the standard material still receives each season's exterior light.
   useFrame(({ clock }) => { if (sign.current) (sign.current.material as THREE.MeshStandardMaterial).emissiveIntensity = spring ? 1 : 0.45 + Math.sin(clock.elapsedTime * 1.2) * 0.035 + (Math.sin(clock.elapsedTime * 8.3) > 0.994 ? 0.12 : 0); });
   return <group>
-    <RefinedAsset file="facade" snow={winter} />
+    <RefinedAsset file="facade" snow={winter} materials={springGlass ? springWindowMaterials : undefined} doorway={doorway} />
     <RefinedAsset file="sign-shell" snow={winter} color={spring ? "#1688c7" : "#3e8db6"} fallback={<Box position={[0, 4.64, 3.3]} size={[9.35, 1.27, 0.36]} color={spring ? "#1688c7" : "#3e8db6"} outline />} />
     <mesh ref={sign} position={[0, 4.65, 3.594]}><boxGeometry args={[5.1, 0.76, 0.01]} /><meshStandardMaterial color="#ffffff" emissive="#ffffff" emissiveIntensity={spring ? 1 : 0.45} /></mesh>
     <Label text="MONDAY" position={[-0.56, 4.68, 3.605]} width={3.38} height={0.61} color="#15516e" fontSize={196} sharp />
@@ -1073,7 +1106,7 @@ function Facade({ mode, onEnter, spring, rainy, winter }: { mode: Mode; onEnter:
     <Glow position={[0, 4.68, 3.91]} color="#fff1c3" size={[6.4, 1.65]} opacity={spring ? 0.04 : 0.18} />
     {[-2.7, 0, 2.7].map((x) => <pointLight key={x} position={[x, 3.3, 3.85]} color="#ffdba2" intensity={spring ? 0.3 : 2.7} distance={3.5} />)}
     <GlassRain active={rainy && mode !== "inside"} />
-    <SlidingDoors mode={mode} onEnter={onEnter} />
+    <SlidingDoors mode={mode} onEnter={onEnter} springGlass={springGlass} />
   </group>;
 }
 
@@ -1168,8 +1201,85 @@ function SummerLightning({ active, onFlash }: { active: boolean; onFlash: () => 
   </>;
 }
 
-function Scene(props: Props & { compact: boolean }) {
+const exteriorModels = ["street", "street-props", "facade", "entrance", "bicycle", "vending",
+  "roof-shell", "roof-surface", "sign-shell", "door-left", "door-right", "interior"];
+const interiorModels = ["stock-back", "stock-wide", "checkout"];
+const detailModels = ["roof-equipment", "side-alley", "stock-front", "magazine"];
+const interiorTextures = [cashierTexture, ...giftFrontImages];
+
+// Start the storefront, doors and showroom together. Queue this before
+// React mounts individual models in draw order or starts decoration work.
+const firstModels = ["facade", "interior", "street", "entrance", "door-left", "checkout",
+  "door-right", "sign-shell", "roof-shell", "roof-surface", "stock-wide", "stock-back"];
+const secondaryModels = exteriorModels.filter((name) => !firstModels.includes(name));
+for (const name of firstModels) useLoader.preload(GLTFLoader, storeModelUrl(name));
+for (const url of interiorTextures) useLoader.preload(THREE.TextureLoader, url);
+for (const name of secondaryModels) useLoader.preload(GLTFLoader, storeModelUrl(name));
+for (const name of detailModels) useLoader.preload(GLTFLoader, storeModelUrl(name));
+
+function RequiredModel({ name, onLoaded }: { name: string; onLoaded?: (name: string) => void }) {
+  useLoader(GLTFLoader, storeModelUrl(name));
+  useEffect(() => { onLoaded?.(name); }, [name, onLoaded]);
+  return null;
+}
+
+function ExteriorReadiness({ onProgress, onReady }: { onProgress: Props["onExteriorProgress"]; onReady: Props["onExteriorReady"] }) {
+  const [loaded, setLoaded] = useState<Set<string>>(() => new Set());
+  const markLoaded = useCallback((name: string) => {
+    setLoaded((current) => current.has(name) ? current : new Set(current).add(name));
+  }, []);
+  useEffect(() => {
+    // Reserve the last step for a rendered storefront.
+    onProgress(Math.floor(100 * loaded.size / (exteriorModels.length + 1)));
+  }, [loaded.size, onProgress]);
+  return <>
+    {exteriorModels.map((name) =>
+      <Suspense key={name} fallback={null}><RequiredModel name={name} onLoaded={markLoaded} /></Suspense>
+    )}
+    {loaded.size === exteriorModels.length && <ReadyFrame onReady={onReady} />}
+  </>;
+}
+
+function RequiredTexture({ url }: { url: string }) {
+  useLoader(THREE.TextureLoader, url);
+  return null;
+}
+
+function ReadyFrame({ onReady, warm }: { onReady: () => void; warm?: boolean }) {
+  const { gl, scene, camera } = useThree();
+  const notify = useRef(onReady);
+  notify.current = onReady;
+  useEffect(() => {
+    let active = true;
+    let frame = requestAnimationFrame(async () => {
+      if (warm) {
+        try {
+          const textures = new Set<THREE.Texture>();
+          scene.traverse((object) => {
+            if (!(object instanceof THREE.Mesh || object instanceof THREE.Sprite || object instanceof THREE.Line)) return;
+            const materials = Array.isArray(object.material) ? object.material : [object.material];
+            for (const material of materials) {
+              for (const value of Object.values(material)) {
+                if (value instanceof THREE.Texture) textures.add(value);
+              }
+            }
+          });
+          for (const texture of textures) gl.initTexture(texture);
+          await gl.compileAsync(scene, camera);
+        } catch (error) {
+          console.warn("Scene warmup failed", error);
+        }
+      }
+      if (active) frame = requestAnimationFrame(() => notify.current());
+    });
+    return () => { active = false; cancelAnimationFrame(frame); };
+  }, [gl, scene, camera, warm]);
+  return null;
+}
+
+function Scene(props: Props & { compact: boolean; onFrameReport?: (report: string) => void }) {
   const entryProgress = useRef(0);
+  const doorway = useMemo(() => new THREE.Group(), []);
   const spring = props.season === "spring";
   const autumn = props.season === "autumn";
   const winter = props.season === "winter";
@@ -1178,21 +1288,28 @@ function Scene(props: Props & { compact: boolean }) {
   const summerRain = summer && props.mode !== "inside";
   const winterOutside = winter && props.mode !== "inside";
   return <>
+    <ExteriorReadiness onProgress={props.onExteriorProgress} onReady={props.onExteriorReady} />
+    <Suspense fallback={null}>
+      {interiorModels.map((name) => <RequiredModel key={name} name={name} />)}
+      {interiorTextures.map((url) => <RequiredTexture key={url} url={url} />)}
+      <ReadyFrame onReady={props.onInteriorReady} warm />
+    </Suspense>
     <color attach="background" args={[props.mode !== "inside" ? (autumn ? "#f4ddc3" : spring ? "#fff0f4" : winter ? "#1a3040" : "#0e222e") : "#0e222e"]} />
     <fog attach="fog" args={[props.mode !== "inside" ? (autumn ? "#f4ddc3" : spring ? "#fff0f4" : winter ? "#1a3040" : "#0e222e") : "#0e222e", 26, 52]} />
     {props.mode !== "outside" && <ambientLight intensity={0.78} color="#a0c0cb" />}
     <directionalLight position={[-5, 12, 9]} intensity={1.8} color="#a5c9d7" />
     <pointLight position={[-5.8, 5.3, 4.5]} intensity={3.2} distance={12} color="#77b9d8" />
     <SummerLightning active={summer && props.mode === "outside"} onFlash={props.onLightningFlash} />
-    <CameraController mode={props.mode} resetViewKey={props.resetViewKey} onViewReset={props.onViewReset} onEntered={props.onEntered} entryProgress={entryProgress} />
+    <CameraController mode={props.mode} resetViewKey={props.resetViewKey} onViewReset={props.onViewReset} onEntered={props.onEntered} entryProgress={entryProgress} doorway={doorway} onFrameReport={props.onFrameReport} />
     <group position={[0, -0.37, 0]}>
       <EntryExterior mode={props.mode} entryProgress={entryProgress}>
       <Street spring={warmSeason} rainy={summerRain} winter={winter} />
       {winterOutside && <WinterSnowbanks />}<StreetProps spring={warmSeason} winter={winter} />
       </EntryExterior>
-      <Interior projects={props.projects} onSelect={props.onSelect} onCheckout={props.onCheckout} onProfile={props.onProfile} active={props.mode === "inside"} fitRoom={props.mode !== "outside"} loadProjects={props.preloadStage >= 1 || props.mode !== "outside"} loadCheckout={props.preloadStage >= 2 || props.mode !== "outside"} />
+      <Interior projects={props.projects} onSelect={props.onSelect} onCheckout={props.onCheckout} onProfile={props.onProfile} active={props.mode === "inside"} fitRoom={props.mode !== "outside"} />
+      <primitive object={doorway} dispose={null} />
       <EntryExterior mode={props.mode} entryProgress={entryProgress}>
-      <Facade mode={props.mode} onEnter={props.onEnter} spring={warmSeason} rainy={summerRain} winter={winter} /><SpringExteriorWalls active={warmSeason && props.mode !== "inside"} autumn={autumn} /><Rooftop spring={warmSeason} winter={winter} autumn={autumn} /><SideAlley spring={warmSeason} winter={winter} />
+      <Facade mode={props.mode} onEnter={props.onEnter} spring={warmSeason} springGlass={spring} rainy={summerRain} winter={winter} doorway={doorway} /><SpringExteriorWalls active={warmSeason && props.mode !== "inside"} autumn={autumn} /><Rooftop spring={warmSeason} winter={winter} autumn={autumn} /><SideAlley spring={warmSeason} winter={winter} />
       <VendingMachine spring={warmSeason} winter={winter} /><RefinedAsset file="bicycle" snow={winter} /><RefinedAsset file="entrance" snow={winter} /><Drips active={summerRain} />
       <SpringLight active={warmSeason && props.mode !== "inside"} autumn={autumn} /><SpringSunbeam active={warmSeason && props.mode !== "inside"} autumn={autumn} />
       <SpringPetals active={spring && props.mode !== "inside"} compact={props.compact} /><AutumnLeaves active={autumn && props.mode !== "inside"} compact={props.compact} />
@@ -1205,14 +1322,26 @@ function Scene(props: Props & { compact: boolean }) {
 }
 
 export default function RainyStoreScene(props: Props) {
-  const [compact, setCompact] = useState(false);
+  const [compact, setCompact] = useState(() => window.matchMedia("(max-width: 720px)").matches);
   useEffect(() => {
     const query = window.matchMedia("(max-width: 720px)");
     const update = () => setCompact(query.matches);
     update(); query.addEventListener("change", update);
     return () => query.removeEventListener("change", update);
   }, []);
-  return <Canvas camera={{ fov: 58, near: 0.1, far: 90, position: [0, 2.7, 23] }} dpr={[1, compact ? 1.2 : 1.5]} gl={{ antialias: true, powerPreference: "high-performance" }}>
-    <Scene {...props} compact={compact} />
-  </Canvas>;
+  const [frameReport, setFrameReport] = useState("");
+  const preview = import.meta.env.MODE === "preview" ? new URLSearchParams(location.search).get("frameStats") : null;
+  const baseline = preview === "baseline";
+  const steadyDpr = compact ? 1.2 : 1.5;
+  // The moving WebGL canvas is resolution-limited only during the camera move.
+  // Work images and stationary views keep their original resolution.
+  const maxDpr = props.mode === "entering" && !baseline ? (compact ? 0.8 : 0.9) : steadyDpr;
+  return <>
+    <Canvas className={baseline ? "entry-baseline-canvas" : undefined}
+      camera={{ fov: 58, near: 0.1, far: 90, position: [0, 2.7, 23] }}
+      dpr={[Math.min(1, maxDpr), maxDpr]} gl={{ antialias: true, powerPreference: "high-performance" }}>
+      <Scene {...props} compact={compact} onFrameReport={preview ? setFrameReport : undefined} />
+    </Canvas>
+    {preview && props.mode === "inside" && frameReport && <output className="entry-frame-report">{frameReport}</output>}
+  </>;
 }

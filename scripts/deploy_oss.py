@@ -1,6 +1,7 @@
 """Publish only the Vite build, then verify the public website."""
 
 import argparse
+import gzip
 import hashlib
 import json
 import mimetypes
@@ -14,6 +15,20 @@ BUCKET = "monday-mart-zhouchengyi-art"
 ENDPOINT = "https://oss-cn-hongkong.aliyuncs.com"
 SITE = "https://zhouchengyi.art"
 DIST = Path(__file__).resolve().parents[1] / "dist"
+
+
+def compressible(key):
+    return ((key.startswith("assets/") and Path(key).suffix in {".js", ".css"})
+            or (key.startswith("models/common-v4/") and key.endswith(".glb")))
+
+
+def encoded_object(path):
+    key = path.relative_to(DIST).as_posix()
+    headers = headers_for(key)
+    if not compressible(key):
+        return None, headers
+    headers["Content-Encoding"] = "gzip"
+    return gzip.compress(path.read_bytes(), compresslevel=6, mtime=0), headers
 
 
 def build_files():
@@ -42,17 +57,34 @@ def headers_for(key):
     return {"Content-Type": content_type, "Cache-Control": cache}
 
 
+def read_public(key, commit, gzip_required=False):
+    headers = {"Cache-Control": "no-cache"}
+    if gzip_required:
+        headers["Accept-Encoding"] = "gzip"
+    req = Request(f"{SITE}/{key}?deployment={commit}", headers=headers)
+    with urlopen(req, timeout=30) as response:
+        content = response.read()
+        if response.headers.get("Content-Encoding") == "gzip":
+            return gzip.decompress(content)
+        if gzip_required:
+            raise RuntimeError(f"Public asset {key} was not transferred with gzip")
+        return content
+
+
+def verify_transfer(commit, index):
+    entry_assets = re.findall(r'["\']/(assets/[^"\']+\.(?:js|css))["\']', index.read_text())
+    for key in [*entry_assets, "models/common-v4/facade.glb"]:
+        if read_public(key, commit, gzip_required=True) != (DIST / key).read_bytes():
+            raise RuntimeError(f"Public asset {key} does not match the build")
+
+
 def verify_site(commit, expected_index):
     # Retries also accommodate a short delay from a domain cache.
     for attempt in range(6):
         try:
-            def read_public(key):
-                req = Request(f"{SITE}/{key}?deployment={commit}", headers={"Cache-Control": "no-cache"})
-                with urlopen(req, timeout=30) as response:
-                    return response.read()
-            if read_public("") != expected_index:
+            if read_public("", commit) != expected_index:
                 raise RuntimeError("Public homepage does not match this build")
-            if json.loads(read_public("_deployment.json"))["commit"] != commit:
+            if json.loads(read_public("_deployment.json", commit))["commit"] != commit:
                 raise RuntimeError("Public deployment version does not match")
             print(f"Verified {SITE}/ at {commit}")
             return
@@ -69,6 +101,9 @@ def main():
     files = build_files()
     if args.dry_run:
         print(f"Build validated: {len(files)} website files, {sum(p.stat().st_size for p in files):,} bytes")
+        encoded = [(p.stat().st_size, len(encoded_object(p)[0]))
+                   for p in files if compressible(p.relative_to(DIST).as_posix())]
+        print(f"Transfer gzip: {sum(raw for raw, _ in encoded):,} → {sum(gz for _, gz in encoded):,} bytes")
         return
     import oss2
     commit = os.environ["GITHUB_SHA"]
@@ -83,8 +118,13 @@ def main():
         if p == index:
             continue
         key = p.relative_to(DIST).as_posix()
-        bucket.put_object_from_file(key, str(p), headers=headers_for(key))
+        content, headers = encoded_object(p)
+        if content is None:
+            bucket.put_object_from_file(key, str(p), headers=headers)
+        else:
+            bucket.put_object(key, content, headers=headers)
         print(f"Uploaded {key}")
+    verify_transfer(commit, index)
     # Keep old hashed assets available for visitors with an older page open.
     bucket.put_object_from_file("index.html", str(index), headers=headers_for("index.html"))
     marker = {"commit": commit, "index_sha256": hashlib.sha256(index.read_bytes()).hexdigest()}

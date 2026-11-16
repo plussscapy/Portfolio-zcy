@@ -3,6 +3,22 @@ import { X } from "lucide-react";
 import { projects, type Project, type ProjectImage } from "../lib/projects";
 import "./project-image-viewer.css";
 
+const previews = import.meta.glob<string>("../lib/project-previews/**/*.webp", { eager: true, query: "?url", import: "default" });
+const previewWidths = [640, 960, 1600];
+const previewSizes = "(max-width: 767px) calc(100vw - 48px), (max-width: 1000px) calc(82vw - 72px), 748px";
+
+function previewFor(original: string) {
+  const path = original.match(/^\/projects\/(.+)\.[^/.]+$/)?.[1];
+  const sources = path ? previewWidths.flatMap((width) => {
+    const url = previews[`../lib/project-previews/${path}-${width}.webp`];
+    return url ? [{ url, width }] : [];
+  }) : [];
+  return {
+    src: sources[0]?.url ?? original,
+    srcSet: sources.length ? sources.map(({ url, width }) => `${url} ${width}w`).join(", ") : undefined,
+  };
+}
+
 function OriginalImage({ image, onClose }: { image: ProjectImage; onClose: () => void }) {
   const ref = useRef<HTMLDialogElement>(null);
   useEffect(() => { const dialog = ref.current!; dialog.showModal(); return () => dialog.close(); }, []);
@@ -52,8 +68,8 @@ export default function ProjectImageViewer({ project, onClose }: { project: Proj
         <button className="modal-close work-image-mobile-close" type="button" onClick={onClose} aria-label="关闭作品"><X size={14} /></button>
         <div className="work-image-scroll" ref={scrollRef} tabIndex={0} aria-label="作品图片，上下滚动浏览" onScroll={updatePosition}>
           <article className="work-image-gallery" aria-label={project.title}>
-            {project.images.map((image, index) => <img key={image.id} ref={(element) => { imageRefs.current[index] = element; }} src={image.src} alt={image.alt}
-              width={image.width} height={image.height} loading={index < 2 ? "eager" : "lazy"} decoding="async" onLoad={updatePosition}
+            {project.images.map((image, index) => <img key={image.id} ref={(element) => { imageRefs.current[index] = element; }} {...previewFor(image.src)} sizes={previewSizes} alt={image.alt}
+              width={image.width} height={image.height} loading={index === 0 ? "eager" : "lazy"} fetchPriority={index === 0 ? "high" : "auto"} decoding="async" onLoad={updatePosition}
               role="button" tabIndex={0} aria-label={`${image.alt}，点击查看原图`} onClick={() => setZoomed(image)}
               onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); setZoomed(image); } }} />)}
             {!total && <p className="work-image-empty">作品图片准备中。</p>}

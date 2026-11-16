@@ -43,10 +43,10 @@ npm run preview
 ## 更新内容
 
 - 修改作品入口及详情图片顺序：`lib/projects.json`。每件作品的 `images` 数组按展示顺序排列，数量不限；每张图片有稳定的 `id`、原图路径、尺寸和说明文字。
-- 当前四个作品暂共用 AFTER HOURS 概念示例，每个入口展示 20 张；内容由 5 张原始 PNG 组成并重复排列，仅用于样式验证。原图位于 `public/projects/after-hours/`，没有转换格式或重新压缩。替换真实作品时按实际图片填写清单；支持不同高度的长图。
+- 当前四个作品暂共用 AFTER HOURS 概念示例，每个入口展示 20 张。原始 PNG 在 `public/projects/after-hours/`，点击「查看原图」时才请求。详情优先使用 `lib/project-previews/after-hours/` 内同名的 640、960、1600 像素宽 WebP。替换图片时同步生成相应预览。没有预览的图片会使用清单里的原图。
 - 作品仍按原来的包装卡片 → 展开弹窗面板方式显示，保留背景遮罩、面板尺寸、开启动画和关闭后返回店内的逻辑。只将面板内部替换为图片详情，保持上下滚动；电脑端在面板内左右 36px，手机端（宽度不超过 767px）左右 24px；首图上角、尾图下角各 8px 圆角。右侧显示当前页、100px 竖向进度线和总页数。
-- 本地可直接打开 `/project-preview` 检查同一个作品详情组件，附加 `?project=project-2` 等参数可选择作品；关闭后返回便利店。测试版的选图工具没有接入正式访客界面，后台上传与发布尚未实现。
-- 修改作品封面：`public/project-gift-front-01.png` 至 `04.png`。
+- 开发服务器和 `--mode preview` 构建可打开 `/project-preview` 检查作品详情，附加 `?project=project-2` 等参数可选择作品。正式构建从店内展品打开详情。3D 场景加载失败时可打开履历或重试。
+- 更新 3D 包装贴图时，编辑 `public/project-gift-front-01.png` 至 `04.png`，并更新 `lib/store-textures/` 内同名的 `compact`（640 像素宽）和 `full`（最多 1152 像素宽）WebP。收银员贴图使用同样的两档，导出时保留源图比例和透明通道。
 - 更新简历：替换 `public/zhou-chengyi-resume.pdf`。
 - 修改场景、动画：`components/RainyStoreScene.tsx`。
 - 音乐来源与使用说明：`public/audio/README.md`。
@@ -57,7 +57,7 @@ npm run preview
 
 发布使用 GitHub OIDC 与阿里云 RAM 临时身份，无需保存长期 AccessKey。仅 `plussscapy/Portfolio-zcy` 的 `main` 分支可承担发布角色；权限仅为当前网站 OSS 对象的读取与写入。具体权限与信任条件保存在 `deploy/oss-policy.json`、`deploy/oidc-trust.json`。
 
-发布先上传资源，再更新首页和 `_deployment.json` 版本标记。旧哈希资源会保留，避免已经打开的页面受影响。构建失败不会更新网站；上传失败会在 Actions 中显示失败原因，修复后可重新运行。若需要恢复历史版本，可在对应历史成功发布记录中重新运行任务。
+发布先上传资源，给构建后的 JS、CSS 和 `models/common-v4/` 下的模型设置 gzip 传输。新首页发布前，脚本会核对公开入口 JS、CSS 与店面模型的响应编码和解压后的内容。验证通过后更新首页和 `_deployment.json`。旧哈希资源会保留。若需要恢复历史版本，可在对应历史成功发布记录中重新运行任务。
 
 手动发布步骤：
 
