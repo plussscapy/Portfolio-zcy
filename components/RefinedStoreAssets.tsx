@@ -104,6 +104,16 @@ function Model({ file, color, emissive, emissiveIntensity, materials, materialRe
           geometries.push(object.geometry);
         }
       }
+      // The staff step and its bedding share the same vertical faces.
+      // Inset the bedding below the step so neither plane competes for depth.
+      if (file === "side-alley" && object.name.startsWith("Assembly_|_Staff_door_step_bedding")) {
+        const bedding = object.geometry.clone();
+        bedding.computeBoundingBox();
+        const center = bedding.boundingBox!.getCenter(new Vector3());
+        bedding.translate(-center.x, 0, -center.z).scale(0.98, 1, 0.98).translate(center.x, 0, center.z);
+        object.geometry = bedding;
+        geometries.push(bedding);
+      }
       // The imported window glints straddle the glass face at z=3.42.
       // Keep the thin printed highlights clear of the glazing depth plane.
       if (file === "facade" && /^Web_\|_Facade00(?:4[7-9]|5[0126-9]|6[01])/.test(object.name)) {

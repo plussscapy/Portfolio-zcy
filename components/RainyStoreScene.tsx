@@ -1132,10 +1132,15 @@ function Rooftop({ spring, winter, autumn = false }: { spring: boolean; winter: 
   </group>;
 }
 
-function SideAlley({ spring, winter }: { spring: boolean; winter: boolean }) {
+function SideAlley({ season }: { season: Season }) {
+  const spring = season === "spring";
+  const autumn = season === "autumn";
+  const warmSeason = spring || autumn;
   return <group>
-    <RefinedAsset file="side-alley" snow={winter} />
-    <pointLight position={[6.1, 3.6, -0.35]} color={spring ? "#f5dfb8" : "#8cc6d1"} intensity={spring ? 0.18 : 4.2} distance={5.2} />
+    <RefinedAsset file="side-alley" snow={season === "winter"} />
+    <pointLight position={warmSeason ? [7.7, 3.4, -1] : [6.1, 3.6, -0.35]}
+      color={spring ? "#fff4e7" : autumn ? "#f5dfb8" : "#8cc6d1"}
+      intensity={warmSeason ? 18 : 4.2} distance={warmSeason ? 6.5 : 5.2} />
   </group>;
 }
 
@@ -1309,7 +1314,7 @@ function Scene(props: Props & { compact: boolean; onFrameReport?: (report: strin
       <Interior projects={props.projects} onSelect={props.onSelect} onCheckout={props.onCheckout} onProfile={props.onProfile} active={props.mode === "inside"} fitRoom={props.mode !== "outside"} />
       <primitive object={doorway} dispose={null} />
       <EntryExterior mode={props.mode} entryProgress={entryProgress}>
-      <Facade mode={props.mode} onEnter={props.onEnter} spring={warmSeason} springGlass={spring} rainy={summerRain} winter={winter} doorway={doorway} /><SpringExteriorWalls active={warmSeason && props.mode !== "inside"} autumn={autumn} /><Rooftop spring={warmSeason} winter={winter} autumn={autumn} /><SideAlley spring={warmSeason} winter={winter} />
+      <Facade mode={props.mode} onEnter={props.onEnter} spring={warmSeason} springGlass={spring} rainy={summerRain} winter={winter} doorway={doorway} /><SpringExteriorWalls active={warmSeason && props.mode !== "inside"} autumn={autumn} /><Rooftop spring={warmSeason} winter={winter} autumn={autumn} /><SideAlley season={props.season} />
       <VendingMachine spring={warmSeason} winter={winter} /><RefinedAsset file="bicycle" snow={winter} /><RefinedAsset file="entrance" snow={winter} /><Drips active={summerRain} />
       <SpringLight active={warmSeason && props.mode !== "inside"} autumn={autumn} /><SpringSunbeam active={warmSeason && props.mode !== "inside"} autumn={autumn} />
       <SpringPetals active={spring && props.mode !== "inside"} compact={props.compact} /><AutumnLeaves active={autumn && props.mode !== "inside"} compact={props.compact} />
