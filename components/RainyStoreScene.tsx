@@ -1180,7 +1180,7 @@ function Scene(props: Props & { compact: boolean }) {
   return <>
     <color attach="background" args={[props.mode !== "inside" ? (autumn ? "#f4ddc3" : spring ? "#fff0f4" : winter ? "#1a3040" : "#0e222e") : "#0e222e"]} />
     <fog attach="fog" args={[props.mode !== "inside" ? (autumn ? "#f4ddc3" : spring ? "#fff0f4" : winter ? "#1a3040" : "#0e222e") : "#0e222e", 26, 52]} />
-    <ambientLight intensity={0.78} color="#a0c0cb" />
+    {props.mode !== "outside" && <ambientLight intensity={0.78} color="#a0c0cb" />}
     <directionalLight position={[-5, 12, 9]} intensity={1.8} color="#a5c9d7" />
     <pointLight position={[-5.8, 5.3, 4.5]} intensity={3.2} distance={12} color="#77b9d8" />
     <SummerLightning active={summer && props.mode === "outside"} onFlash={props.onLightningFlash} />

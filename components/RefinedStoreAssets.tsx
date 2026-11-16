@@ -1,7 +1,7 @@
 import { Component, type ReactNode, type RefObject, Suspense, useEffect, useLayoutEffect, useMemo } from "react";
 import { useLoader } from "@react-three/fiber";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
-import { Mesh, MeshStandardMaterial, Vector3 } from "three";
+import { Mesh, MeshBasicMaterial, MeshStandardMaterial, Vector3 } from "three";
 import { applyStoreSnow } from "./storeSnow";
 
 class AssetBoundary extends Component<{ children: ReactNode; fallback: ReactNode }, { failed: boolean }> {
@@ -31,7 +31,7 @@ function Model({ file, color, emissive, emissiveIntensity, materials, materialRe
   const { scene, instances, copies, snowAmounts, geometries } = useMemo(() => {
     const scene = gltf.scene.clone(true);
     const instances = new Map<string, { original: MeshStandardMaterial; material: MeshStandardMaterial }>();
-    const copies = new Set<MeshStandardMaterial>();
+    const copies = new Set<MeshStandardMaterial | MeshBasicMaterial>();
     const geometries: Mesh["geometry"][] = [];
     const snowAmounts: { value: number }[] = [];
     scene.traverse((object) => {
@@ -65,6 +65,13 @@ function Model({ file, color, emissive, emissiveIntensity, materials, materialRe
       // Keep the thin printed highlights clear of the glazing depth plane.
       if (file === "facade" && /^Web_\|_Facade00(?:4[7-9]|5[0126-9]|6[01])/.test(object.name)) {
         object.position.z += 0.012;
+      }
+      // The facade GLB batches both cream emblem faces into this mesh.
+      if (file === "facade" && /^Web_\|_Facade0010\d*$/.test(object.name)) {
+        const material = new MeshBasicMaterial({ color: "#ffffff", toneMapped: false, side: object.material.side });
+        object.material = material;
+        copies.add(material);
+        return;
       }
       const copy = (original: MeshStandardMaterial) => {
         const material = original.clone();
