@@ -653,10 +653,10 @@ function SpringLight({ active, autumn = false }: { active: boolean; autumn?: boo
   return <group visible={active}>
     {/* Fixed diagonal pools of sunlight and soft awning shadows; no shadow-map redraw. */}
     {[[1.7, 5.2, 8.3, 4.4], [-3.3, 2.9, 3.2, 2.5]].map(([x, z, w, h], i) => <mesh key={`sun-${i}`} position={[x, z < 4 ? 0.153 : 0.042, z]} rotation={[-Math.PI / 2, 0, -0.22]}>
-      <planeGeometry args={[w, h]} /><meshBasicMaterial map={glow} color={autumn ? "#e99545" : "#ffe1a4"} transparent opacity={autumn ? (i ? 0.5 : 0.62) : (i ? 0.6 : 0.82)} blending={THREE.AdditiveBlending} depthWrite={false} />
+      <planeGeometry args={[w, h]} /><meshBasicMaterial map={glow} color={autumn ? "#e99545" : "#ffe1a4"} transparent opacity={autumn ? (i ? 0.5 : 0.62) : (i ? 0.6 : 0.82)} blending={THREE.AdditiveBlending} depthWrite={false} userData={z >= 4 ? { entryFade: "floor" } : undefined} />
     </mesh>)}
     {[[-3.0, 4.73, 2.2, 0.7], [2.9, 4.92, 2.9, 0.8]].map(([x, z, w, h], i) => <mesh key={`shade-${i}`} position={[x, 0.045, z]} rotation={[-Math.PI / 2, 0, -0.32]}>
-      <planeGeometry args={[w, h]} /><meshBasicMaterial map={glow} color={autumn ? "#765644" : "#605858"} transparent opacity={0.28} depthWrite={false} />
+      <planeGeometry args={[w, h]} /><meshBasicMaterial map={glow} color={autumn ? "#765644" : "#605858"} transparent opacity={0.28} depthWrite={false} userData={{ entryFade: "floor" }} />
     </mesh>)}
     {[-3.62, 3.62].map((x, i) => <mesh key={`frontlight-${x}`} position={[x, 4.64, 3.592]} rotation={[0, 0, -0.2]}>
       <planeGeometry args={[2.0, 1.24]} /><meshBasicMaterial map={glow} color={autumn ? "#ffb775" : "#ffeacf"} transparent opacity={autumn ? (i ? 0.35 : 0.43) : (i ? 0.15 : 0.18)} blending={THREE.AdditiveBlending} depthWrite={false} />
@@ -1301,14 +1301,16 @@ function Scene(props: Props & { compact: boolean; onFrameReport?: (report: strin
     </Suspense>
     <color attach="background" args={[props.mode !== "inside" ? (autumn ? "#f4ddc3" : spring ? "#fff0f4" : winter ? "#1a3040" : "#0e222e") : "#0e222e"]} />
     <fog attach="fog" args={[props.mode !== "inside" ? (autumn ? "#f4ddc3" : spring ? "#fff0f4" : winter ? "#1a3040" : "#0e222e") : "#0e222e", 26, 52]} />
-    {props.mode !== "outside" && <ambientLight intensity={0.78} color="#a0c0cb" />}
+    <ambientLight intensity={0.78} color="#a0c0cb" />
     <directionalLight position={[-5, 12, 9]} intensity={1.8} color="#a5c9d7" />
     <pointLight position={[-5.8, 5.3, 4.5]} intensity={3.2} distance={12} color="#77b9d8" />
     <SummerLightning active={summer && props.mode === "outside"} onFlash={props.onLightningFlash} />
     <CameraController mode={props.mode} resetViewKey={props.resetViewKey} onViewReset={props.onViewReset} onEntered={props.onEntered} entryProgress={entryProgress} doorway={doorway} onFrameReport={props.onFrameReport} />
     <group position={[0, -0.37, 0]}>
+      <group visible={props.mode !== "inside"}>
+        <Street spring={warmSeason} rainy={summerRain} winter={winter} />
+      </group>
       <EntryExterior mode={props.mode} entryProgress={entryProgress}>
-      <Street spring={warmSeason} rainy={summerRain} winter={winter} />
       {winterOutside && <WinterSnowbanks />}<StreetProps spring={warmSeason} winter={winter} />
       </EntryExterior>
       <Interior projects={props.projects} onSelect={props.onSelect} onCheckout={props.onCheckout} onProfile={props.onProfile} active={props.mode === "inside"} fitRoom={props.mode !== "outside"} />
