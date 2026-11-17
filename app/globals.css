@@ -259,11 +259,19 @@ button { color: inherit; }
 .resume-actions button:hover:not(:disabled) { background: #414a58; }
 .resume-actions button:disabled { opacity: .65; cursor: wait; }
 .resume-dialog button:focus-visible, .entry-loader button:focus-visible { outline: 2px solid #5ba8ca; outline-offset: 3px; }
-.store-profile-dialog > .modal-close { width: 44px; height: 44px; }
+.store-profile-panel { display: contents; }
+.store-profile-panel > .modal-close { width: 44px; height: 44px; }
+@media (max-width: 720px), (hover: none) and (pointer: coarse) {
+  .store-profile-dialog { grid-template-columns: minmax(0, 1fr); padding: 16px; overflow: hidden; }
+  .store-profile-panel { display: block; position: relative; width: min(820px, 100%); animation: card-in .55s cubic-bezier(.16,.82,.2,1) both; }
+  .store-profile-panel > .modal-close { top: 12px; right: 12px; border-color: rgba(23,49,47,.15); background: #fffdf3; color: var(--ink); }
+  .store-profile-panel .store-profile-card { width: 100%; max-height: min(88dvh, calc(100dvh - 32px)); animation: none; }
+}
 .resume-feedback { margin: 10px 0 0; color: var(--resume-muted); font-size: 13px; text-align: right; }
 .work-loading { position: fixed; z-index: 110; bottom: 24px; left: 50%; transform: translateX(-50%); padding: 12px 18px; border-radius: 999px; background: #17312f; color: white; }
 @media (prefers-reduced-motion: reduce) {
-  .resume-dialog, .resume-dialog .resume-card, .resume-dialog .store-profile-card, .mobile-view-notice { animation: none; }
+  .resume-dialog, .resume-dialog .resume-card, .resume-dialog .store-profile-card,
+  .resume-dialog .store-profile-panel, .mobile-view-notice { animation: none; }
 }
 
 .entry-frame-report { position: absolute; z-index: 10; inset: 68px 16px auto auto; max-width: calc(100% - 32px); padding: 8px 12px; border-radius: 8px; background: #17312f; color: #fff; font-size: 12px; }

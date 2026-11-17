@@ -118,19 +118,21 @@ function StoreProfileModal({ onClose }: { onClose: () => void }) {
 
   return <dialog ref={ref} className="modal-backdrop resume-dialog store-profile-dialog" aria-labelledby="store-profile-title"
     onCancel={(event) => { event.preventDefault(); onClose(); }}>
-    <button autoFocus type="button" className="modal-close" onClick={onClose} aria-label="关闭个人简介"><X size={19} /></button>
-    <article className="store-profile-card">
-      <header className="profile-intro">
-        <div className="profile-avatar" role="img" aria-label="店员头像" />
-        <div><small>STORE STAFF / DESIGNER</small><h2 id="store-profile-title">周成一</h2><p>UI 设计师 · 深圳</p></div>
-      </header>
-      <section className="profile-about">
-        <UserRound size={19} aria-hidden="true" />
-        <div><small>ABOUT</small><h3>自我介绍</h3><ProfileIntroduction /></div>
-      </section>
-      <ProfileHistory />
-      <footer><span>周成一 · UI DESIGNER</span><button type="button" onClick={onClose}>继续逛店</button></footer>
-    </article>
+    <div className="store-profile-panel">
+      <button autoFocus type="button" className="modal-close" onClick={onClose} aria-label="关闭个人简介"><X size={19} /></button>
+      <article className="store-profile-card">
+        <header className="profile-intro">
+          <div className="profile-avatar" role="img" aria-label="店员头像" />
+          <div><small>STORE STAFF / DESIGNER</small><h2 id="store-profile-title">周成一</h2><p>UI 设计师 · 深圳</p></div>
+        </header>
+        <section className="profile-about">
+          <UserRound size={19} aria-hidden="true" />
+          <div><small>ABOUT</small><h3>自我介绍</h3><ProfileIntroduction /></div>
+        </section>
+        <ProfileHistory />
+        <footer><span>周成一 · UI DESIGNER</span><button type="button" onClick={onClose}>继续逛店</button></footer>
+      </article>
+    </div>
   </dialog>;
 }
 
