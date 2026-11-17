@@ -32,6 +32,7 @@ export default function ProjectImageViewer({ project, onClose }: { project: Proj
   const dialogRef = useRef<HTMLDialogElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const imageRefs = useRef<(HTMLImageElement | null)[]>([]);
+  const positionFrame = useRef<number | null>(null);
   const [opened, setOpened] = useState(false);
   const [position, setPosition] = useState({ page: 1, progress: 0 });
   const [zoomed, setZoomed] = useState<ProjectImage | null>(null);
@@ -40,25 +41,44 @@ export default function ProjectImageViewer({ project, onClose }: { project: Proj
   const updatePosition = useCallback(() => {
     const view = scrollRef.current;
     if (!view) return;
+    const scrollTop = view.scrollTop;
+    if (scrollTop <= 0) {
+      setPosition((current) => current.page === 1 && current.progress === 0 ? current : { page: 1, progress: 0 });
+      return;
+    }
     const max = view.scrollHeight - view.clientHeight;
-    const progress = max > 0 ? Math.min(1, Math.max(0, view.scrollTop / max)) : 0;
+    const progress = max > 0 ? Math.min(1, scrollTop / max) : 0;
     const line = view.getBoundingClientRect().top + view.clientHeight * 0.45;
     let page = 1;
     imageRefs.current.forEach((image, index) => { if (image && image.getBoundingClientRect().top <= line) page = index + 1; });
-    if (view.scrollTop <= 0) page = 1;
-    if (max > 0 && view.scrollTop >= max - 1) page = total;
-    setPosition({ page, progress });
+    if (max > 0 && scrollTop >= max - 1) page = total;
+    setPosition((current) => current.page === page && current.progress === progress ? current : { page, progress });
   }, [total]);
+
+  const schedulePositionUpdate = useCallback(() => {
+    if (positionFrame.current !== null) return;
+    positionFrame.current = requestAnimationFrame(() => {
+      positionFrame.current = null;
+      updatePosition();
+    });
+  }, [updatePosition]);
 
   useEffect(() => {
     const dialog = dialogRef.current!;
     dialog.showModal();
-    const timer = window.setTimeout(() => setOpened(true), 460);
-    const observer = new ResizeObserver(updatePosition);
+    const showImmediately = window.matchMedia("(max-width: 767px), (prefers-reduced-motion: reduce)").matches;
+    const desktopTimer = showImmediately ? undefined : window.setTimeout(() => setOpened(true), 460);
+    if (showImmediately) setOpened(true);
+    const observer = new ResizeObserver(schedulePositionUpdate);
     observer.observe(scrollRef.current!);
-    updatePosition();
-    return () => { window.clearTimeout(timer); observer.disconnect(); dialog.close(); };
-  }, [updatePosition]);
+    return () => {
+      window.clearTimeout(desktopTimer);
+      observer.disconnect();
+      if (positionFrame.current !== null) cancelAnimationFrame(positionFrame.current);
+      positionFrame.current = null;
+      dialog.close();
+    };
+  }, [schedulePositionUpdate]);
 
   return <dialog className="modal-backdrop project-modal work-image-modal" ref={dialogRef} aria-label={project.title} onCancel={(event) => { event.preventDefault(); onClose(); }}>
     <button className="modal-close work-image-desktop-close" type="button" onClick={onClose} aria-label="关闭作品"><X size={19} /></button>
@@ -66,10 +86,10 @@ export default function ProjectImageViewer({ project, onClose }: { project: Proj
       <div className="project-pack"><span>PROJECT</span><strong>{project.number}</strong></div>
       <div className="project-sheet work-image-panel">
         <button className="modal-close work-image-mobile-close" type="button" onClick={onClose} aria-label="关闭作品"><X size={14} /></button>
-        <div className="work-image-scroll" ref={scrollRef} tabIndex={0} aria-label="作品图片，上下滚动浏览" onScroll={updatePosition}>
+        <div className="work-image-scroll" ref={scrollRef} tabIndex={0} aria-label="作品图片，上下滚动浏览" onScroll={schedulePositionUpdate}>
           <article className="work-image-gallery" aria-label={project.title}>
             {project.images.map((image, index) => <img key={image.id} ref={(element) => { imageRefs.current[index] = element; }} {...previewFor(image.src)} sizes={previewSizes} alt={image.alt}
-              width={image.width} height={image.height} loading={index === 0 ? "eager" : "lazy"} fetchPriority={index === 0 ? "high" : "auto"} decoding="async" onLoad={updatePosition}
+              width={image.width} height={image.height} loading={index === 0 ? "eager" : "lazy"} fetchPriority={index === 0 ? "high" : "auto"} decoding="async" onLoad={schedulePositionUpdate}
               role="button" tabIndex={0} aria-label={`${image.alt}，点击查看原图`} onClick={() => setZoomed(image)}
               onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); setZoomed(image); } }} />)}
             {!total && <p className="work-image-empty">作品图片准备中。</p>}

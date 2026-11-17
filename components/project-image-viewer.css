@@ -2,8 +2,6 @@
 .work-image-modal:not([open]) { display:none; }
 .work-image-modal::backdrop { background:transparent; }
 .work-image-modal .work-image-mobile-close { display:none; }
-/* The original stage, packaging card, sheet dimensions and opening animation
-   stay in globals.css. Only the contents of that sheet change here. */
 .project-sheet.work-image-panel { position:relative; overflow:hidden; scroll-snap-type:none; }
 .work-image-scroll { height:100%; width:100%; overflow-y:auto; overscroll-behavior:contain; scrollbar-width:none; }
 .work-image-scroll::-webkit-scrollbar { display:none; }
@@ -24,14 +22,22 @@
 .work-image-original::backdrop { background:#12251ef0; }
 .work-image-original img { display:block; max-width:none; }
 .work-image-original button { position:fixed; top:16px; right:16px; display:grid; place-items:center; width:44px; height:44px; padding:0; border:0; border-radius:50%; background:white; color:#193a34; cursor:pointer; box-shadow:0 2px 12px #0002; }
+@keyframes work-sheet-in {
+  from { transform:translateY(32px); opacity:0; }
+}
 @media(max-width:767px) {
-  .work-image-modal { --work-margin:24px; }
+  .project-modal.work-image-modal { --work-margin:24px; --project-top:76px; padding:0; place-items:end center; overflow:hidden; backdrop-filter:none; }
+  .work-image-modal .project-stage { width:100%; height:calc(100dvh - var(--project-top)); align-items:flex-end; }
+  .work-image-modal .project-pack { display:none; }
   .work-image-modal > .work-image-desktop-close { display:none; }
   .work-image-modal .work-image-mobile-close { display:grid; top:20px; right:24px; width:44px; height:44px; border:0; border-radius:50%; background:#edf0e9; color:#193a34; box-shadow:none; outline:none; }
   .work-image-modal .work-image-mobile-close:focus-visible { outline:none; }
   .work-image-modal .work-image-mobile-close:focus-visible svg { stroke-width:3; }
-  .work-image-modal .project-sheet.work-image-panel { transform:translateY(100%); opacity:0; transition:transform .66s cubic-bezier(.16,.82,.2,1), opacity .55s ease; }
-  .work-image-modal .is-open .project-sheet.work-image-panel { transform:translateY(0); opacity:1; }
+  .work-image-modal[open] .project-sheet.work-image-panel { width:100%; border-radius:24px 24px 0 0; transform:none; opacity:1; transition:none; animation:work-sheet-in 300ms cubic-bezier(.22,.76,.24,1) both; }
   /* Leave room for the original close button above the image sequence. */
   .work-image-gallery { margin-top:88px; }
+}
+@media(prefers-reduced-motion:reduce) {
+  .work-image-modal .project-pack,
+  .work-image-modal[open] .project-sheet.work-image-panel { animation:none; transition:none; }
 }
