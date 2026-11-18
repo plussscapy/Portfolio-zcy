@@ -64,6 +64,7 @@ button { color: inherit; }
 
 .scene-wrap { position: fixed; inset: 0; }
 .scene-viewport { position: absolute; inset: 0; margin: auto; width: 100%; height: 100%; }
+.project-hover-name { position: absolute; z-index: 2; transform: translateY(calc(-100% - 6px)); pointer-events: none; padding: 7px 12px; border-radius: 999px; background: #fffdf3; color: var(--ink); box-shadow: 0 3px 14px #152b3833; font-size: 12px; font-weight: 700; white-space: nowrap; }
 .scene-viewport:has(.entry-baseline-canvas) { -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,var(--room-edge-opacity, 1)), #000 20%, #000 78%, rgba(0,0,0,var(--room-edge-opacity, 1))); mask-image: linear-gradient(to bottom, rgba(0,0,0,var(--room-edge-opacity, 1)), #000 20%, #000 78%, rgba(0,0,0,var(--room-edge-opacity, 1))); }
 @media (max-width: 720px) {
   .scene-viewport { -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,var(--room-edge-opacity, 1)), #000 20%, #000 78%, rgba(0,0,0,var(--room-edge-opacity, 1))); mask-image: linear-gradient(to bottom, rgba(0,0,0,var(--room-edge-opacity, 1)), #000 20%, #000 78%, rgba(0,0,0,var(--room-edge-opacity, 1))); }
@@ -181,7 +182,9 @@ button { color: inherit; }
 .receipt small { display: block; margin: 14px 0 8px; font-size: 8px; font-weight: 900; letter-spacing: .2em; }
 .receipt h2 { margin: 0 0 20px; font-size: 34px; letter-spacing: -.05em; }
 .receipt p { color: #6b7774; font-size: 13px; }
-.receipt a, .receipt > span { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 13px; color: var(--ink); font-size: 12px; text-decoration: none; }
+.receipt-copy, .receipt > span { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 13px; color: var(--ink); font-size: 12px; }
+.receipt-copy { margin-inline: auto; padding: 0; border: 0; background: none; font-family: inherit; cursor: pointer; user-select: text; }
+.receipt-copy-feedback { position: absolute; right: 0; bottom: 27px; left: 0; font-size: 12px; pointer-events: none; }
 
 @keyframes fade { from { opacity: 0; } }
 @keyframes pulse { 50% { transform: scale(1.8); opacity: .35; } }

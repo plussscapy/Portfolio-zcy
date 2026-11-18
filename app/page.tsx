@@ -155,8 +155,30 @@ function MobileViewNotice({ onClose }: { onClose: () => void }) {
 }
 
 function ContactReceipt({ onClose }: { onClose: () => void }) {
+  const [copyFeedback, setCopyFeedback] = useState("");
+  const feedbackTimer = useRef<number | undefined>(undefined);
+  useEffect(() => () => window.clearTimeout(feedbackTimer.current), []);
+
+  async function copyContact(value: string, label: string) {
+    window.clearTimeout(feedbackTimer.current);
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopyFeedback(`${label}已复制`);
+    } catch {
+      setCopyFeedback("复制失败，请手动选中文字复制");
+    }
+    window.clearTimeout(feedbackTimer.current);
+    feedbackTimer.current = window.setTimeout(() => setCopyFeedback(""), 2200);
+  }
+
   return <div className="modal-backdrop" role="dialog" aria-modal="true" aria-label="联系方式"><button className="modal-close" onClick={onClose}><X size={19} /></button>
-    <article className="receipt"><ReceiptText size={26} /><small>CHECKOUT / CONTACT</small><h2>谢谢光临</h2><p>欢迎来信聊聊你的项目。</p><a href="mailto:17771730581@163.com"><Mail size={16} /> 17771730581@163.com</a><a href="tel:17771730581"><Phone size={16} /> 17771730581</a><span><MapPin size={16} /> 深圳</span></article>
+    <article className="receipt">
+      <ReceiptText size={26} /><small>CHECKOUT / CONTACT</small><h2>谢谢光临</h2><p>欢迎来信聊聊你的项目。</p>
+      <button className="receipt-copy" type="button" title="点击复制邮箱" onClick={() => copyContact("17771730581@163.com", "邮箱")}><Mail size={16} /> 17771730581@163.com</button>
+      <button className="receipt-copy" type="button" title="点击复制手机号" onClick={() => copyContact("17771730581", "手机号")}><Phone size={16} /> 17771730581</button>
+      <span><MapPin size={16} /> 深圳</span>
+      {copyFeedback && <div className="receipt-copy-feedback">{copyFeedback}</div>}
+    </article>
   </div>;
 }
 
@@ -450,7 +472,7 @@ export default function Home() {
       </SceneBoundary>}
       </div>
       <div className={`minimal-prompt ${mode} ${season}`}>
-        {mode === "outside" && <><span>PORTFOLIO CONVENIENCE STORE</span><button ref={entryButton} onClick={enterStore} disabled={entryResetting}>{entryResetting ? "正在准备店内" : "进入便利店"} <b>→</b></button></>}
+        {mode === "outside" && <><span>欢迎进店查看作品</span><button ref={entryButton} onClick={enterStore} disabled={entryResetting}>{entryResetting ? "正在准备店内" : "进入便利店"} <b>→</b></button></>}
         {mode === "entering" && <span className="entering-status"><i /> 正在推门进入</span>}
         {mode === "inside" && <span className="inside-hint"><MousePointer2 size={14} /> 点击店员看简介 · 点击展品看作品 · 点击收银台查看联系方式</span>}
       </div>

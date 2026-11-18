@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
 import { X } from "lucide-react";
-import { projects, type Project, type ProjectImage } from "../lib/projects";
+import { projects, type Project } from "../lib/projects";
 import "./project-image-viewer.css";
 
 const previews = import.meta.glob<string>("../lib/project-previews/**/*.webp", { eager: true, query: "?url", import: "default" });
@@ -19,15 +19,6 @@ function previewFor(original: string) {
   };
 }
 
-function OriginalImage({ image, onClose }: { image: ProjectImage; onClose: () => void }) {
-  const ref = useRef<HTMLDialogElement>(null);
-  useEffect(() => { const dialog = ref.current!; dialog.showModal(); return () => dialog.close(); }, []);
-  return <dialog className="work-image-original" ref={ref} aria-label="查看原图" onCancel={(event) => { event.preventDefault(); event.stopPropagation(); onClose(); }}>
-    <img src={image.src} alt={image.alt} width={image.width} height={image.height} />
-    <button autoFocus type="button" onClick={onClose} aria-label="关闭原图"><X size={20} /></button>
-  </dialog>;
-}
-
 export default function ProjectImageViewer({ project, onClose }: { project: Project; onClose: () => void }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -35,7 +26,6 @@ export default function ProjectImageViewer({ project, onClose }: { project: Proj
   const positionFrame = useRef<number | null>(null);
   const [opened, setOpened] = useState(false);
   const [position, setPosition] = useState({ page: 1, progress: 0 });
-  const [zoomed, setZoomed] = useState<ProjectImage | null>(null);
   const total = project.images.length;
 
   const updatePosition = useCallback(() => {
@@ -85,13 +75,16 @@ export default function ProjectImageViewer({ project, onClose }: { project: Proj
     <div className={`project-stage ${opened ? "is-open" : ""}`} style={{ "--project": project.color, "--project-ink": project.ink } as CSSProperties}>
       <div className="project-pack"><span>PROJECT</span><strong>{project.number}</strong></div>
       <div className="project-sheet work-image-panel">
-        <button className="modal-close work-image-mobile-close" type="button" onClick={onClose} aria-label="关闭作品"><X size={14} /></button>
+        <div className="work-image-mobile-bar">
+          <strong>作品 {project.number}</strong>
+          {total > 0 && <span className="work-image-mobile-count">{position.page} / {total}</span>}
+          <button className="modal-close work-image-mobile-close" type="button" onClick={onClose} aria-label="关闭作品"><X size={14} /></button>
+        </div>
         <div className="work-image-scroll" ref={scrollRef} tabIndex={0} aria-label="作品图片，上下滚动浏览" onScroll={schedulePositionUpdate}>
+          <h2 className="work-image-mobile-title">{project.title.replace(/^作品 \d+ · /, "")}</h2>
           <article className="work-image-gallery" aria-label={project.title}>
             {project.images.map((image, index) => <img key={image.id} ref={(element) => { imageRefs.current[index] = element; }} {...previewFor(image.src)} sizes={previewSizes} alt={image.alt}
-              width={image.width} height={image.height} loading={index === 0 ? "eager" : "lazy"} fetchPriority={index === 0 ? "high" : "auto"} decoding="async" onLoad={schedulePositionUpdate}
-              role="button" tabIndex={0} aria-label={`${image.alt}，点击查看原图`} onClick={() => setZoomed(image)}
-              onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); setZoomed(image); } }} />)}
+              width={image.width} height={image.height} loading={index === 0 ? "eager" : "lazy"} fetchPriority={index === 0 ? "high" : "auto"} decoding="async" onLoad={schedulePositionUpdate} />)}
             {!total && <p className="work-image-empty">作品图片准备中。</p>}
           </article>
           <footer className="work-image-footer">MONDAY MART · PROJECT {project.number}</footer>
@@ -103,7 +96,6 @@ export default function ProjectImageViewer({ project, onClose }: { project: Proj
         </aside>}
       </div>
     </div>
-    {zoomed && <OriginalImage image={zoomed} onClose={() => setZoomed(null)} />}
   </dialog>;
 }
 

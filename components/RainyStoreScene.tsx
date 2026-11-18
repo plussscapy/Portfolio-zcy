@@ -16,6 +16,8 @@ import { advanceEntryTime, createEntryPath, entryDistanceAtTime, ENTRY_END, ENTR
 
 type Mode = "outside" | "entering" | "inside";
 type Season = "spring" | "summer" | "autumn" | "winter";
+type ProjectHover = { project: Project; x: number; y: number };
+type OnProjectHover = (hover: ProjectHover | null) => void;
 type Props = { mode: Mode; season: Season; resetViewKey: number; onEnter: () => void; onViewReset: () => boolean; onEntered: () => void; onExteriorProgress: (value: number) => void; onExteriorReady: () => void; onInteriorReady: () => void; onLightningFlash: () => void; onSelect: (project: Project) => void; onCheckout: () => void; onProfile: () => void; projects: Project[] };
 
 const navy = "#152b38";
@@ -740,7 +742,7 @@ const sceneTexture = (name: string) => textureVariants[`../lib/store-textures/${
 const cashierTexture = sceneTexture("cashier-front-sprite");
 const giftFrontImages = ["01", "02", "03", "04"].map((number) => sceneTexture(`project-gift-front-${number}`));
 
-function GiftBoxImage({ image, color }: { image: string; color: string }) {
+function GiftBoxImage({ image, color, highlighted }: { image: string; color: string; highlighted: boolean }) {
   const source = useLoader(THREE.TextureLoader, image);
   const front = useMemo(() => {
     const crop = giftLayout.frontCrop;
@@ -773,7 +775,7 @@ function GiftBoxImage({ image, color }: { image: string; color: string }) {
       <meshStandardMaterial attach="material-1" color={color} roughness={0.83} />
       <meshStandardMaterial attach="material-2" color={color} roughness={0.83} />
       <meshStandardMaterial attach="material-3" color={color} roughness={0.83} />
-      <meshBasicMaterial attach="material-4" map={front} toneMapped={false} />
+      <meshBasicMaterial attach="material-4" map={front} color={highlighted ? [1.12, 1.12, 1.12] : "white"} toneMapped={false} />
       <meshStandardMaterial attach="material-5" color={color} roughness={0.83} />
     </mesh>
     <mesh position={[0, b.bodyHeight + b.lidHeight / 2, 0]} castShadow receiveShadow userData={{ projectGift: true }}>
@@ -785,10 +787,42 @@ function GiftBoxImage({ image, color }: { image: string; color: string }) {
   </group>;
 }
 
-function ProjectDisplay({ projects, onSelect, active, loadImages }: { projects: Project[]; onSelect: Props["onSelect"]; active: boolean; loadImages: boolean }) {
+function ProjectDisplay({ projects, onSelect, onProjectHover, active, loadImages }: { projects: Project[]; onSelect: Props["onSelect"]; onProjectHover: OnProjectHover; active: boolean; loadImages: boolean }) {
+  const [highlighted, setHighlighted] = useState<string | null>(null);
+  const shelfGroup = useRef<THREE.Group>(null);
+  const { camera, size } = useThree();
+  const { width, height } = size;
+  const projectedCorner = useMemo(() => new THREE.Vector3(), []);
   const shelf = giftLayout.shelf;
   const gift = giftLayout.box;
-  return <group position={[2.48, 0, -3.7]}>
+  const hoverScale = 1.045;
+  useEffect(() => {
+    const index = projects.findIndex((project) => project.id === highlighted);
+    if (!active || width <= 767 || index === -1) {
+      onProjectHover(null);
+      return;
+    }
+    const frame = requestAnimationFrame(() => {
+      const group = shelfGroup.current;
+      if (!group) return;
+      const x = index % 2 === 0 ? gift.leftX : gift.rightX;
+      const y = (index < 2 ? shelf.upperY : shelf.lowerY) + shelf.thickness / 2;
+      projectedCorner.set(
+        x - (gift.width / 2 + gift.lidOverhang) * hoverScale,
+        y + (gift.bodyHeight + gift.lidHeight) * hoverScale,
+        gift.centerZ + (gift.depth / 2 + gift.lidOverhang) * hoverScale,
+      );
+      group.localToWorld(projectedCorner).project(camera);
+      onProjectHover({
+        project: projects[index],
+        x: (projectedCorner.x + 1) * width / 2,
+        y: (1 - projectedCorner.y) * height / 2,
+      });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [active, camera, gift, height, highlighted, onProjectHover, projectedCorner, projects, shelf, width]);
+
+  return <group ref={shelfGroup} position={[2.48, 0, -3.7]}>
     <Box position={[0, 2.02, -0.1]} size={[3.35, 3.7, 0.42]} color="#cfdbd7" />
     <Box position={[0, 3.77, 0.14]} size={[3.37, 0.32, 0.42]} color="#4e9fc6" emissive="#acd7e7" intensity={0.2} />
     {/* Match the 4:1 label texture so the lettering keeps its natural proportions. */}
@@ -797,9 +831,17 @@ function ProjectDisplay({ projects, onSelect, active, loadImages }: { projects: 
     {projects.map((project, i) => {
       const x = i % 2 === 0 ? gift.leftX : gift.rightX;
       const y = (i < 2 ? shelf.upperY : shelf.lowerY) + shelf.thickness / 2;
-      return <Clickable key={project.id} position={[x, y, gift.centerZ]} active={active} onClick={(event) => { event.stopPropagation(); onSelect(project); }}>
+      return <Clickable key={project.id} position={[x, y, gift.centerZ]} active={active} hoverScale={hoverScale}
+        onHover={(event) => {
+          if (!event) {
+            setHighlighted((current) => current === project.id ? null : current);
+          } else if (width > 767 && event.pointerType === "mouse") {
+            setHighlighted(project.id);
+          }
+        }}
+        onClick={(event) => { event.stopPropagation(); setHighlighted(null); onSelect(project); }}>
         {loadImages ? <Suspense fallback={<Box position={[0, gift.bodyHeight / 2, 0]} size={[gift.width, gift.bodyHeight, gift.depth]} color={project.color} />}>
-          <GiftBoxImage image={giftFrontImages[i]} color={project.color} />
+          <GiftBoxImage image={giftFrontImages[i]} color={project.color} highlighted={active && width > 767 && highlighted === project.id} />
         </Suspense> : <Box position={[0, gift.bodyHeight / 2, 0]} size={[gift.width, gift.bodyHeight, gift.depth]} color={project.color} />}
       </Clickable>;
     })}
@@ -809,11 +851,19 @@ function ProjectDisplay({ projects, onSelect, active, loadImages }: { projects: 
   </group>;
 }
 
-function Clickable({ position, children, onClick, active = true, hoverScale = 1.045 }: { position: [number, number, number]; children: ReactNode; onClick: (e: ThreeEvent<MouseEvent>) => void; active?: boolean; hoverScale?: number }) {
+function Clickable({ position, children, onClick, onHover, active = true, hoverScale = 1.045, yieldProjectHover = false }: { position: [number, number, number]; children: ReactNode; onClick: (e: ThreeEvent<MouseEvent>) => void; onHover?: (event: ThreeEvent<PointerEvent> | null) => void; active?: boolean; hoverScale?: number; yieldProjectHover?: boolean }) {
   const [hover, setHover] = useState(false);
   useEffect(() => { if (!active) setHover(false); }, [active]);
   useEffect(() => { if (active && hover) document.body.style.cursor = "pointer"; return () => { document.body.style.cursor = "default"; }; }, [active, hover]);
-  return <group position={position} scale={active && hover ? hoverScale : 1} onClick={active ? onClick : undefined} onPointerOver={active ? (e) => { e.stopPropagation(); setHover(true); } : undefined} onPointerOut={active ? () => setHover(false) : undefined}>{children}</group>;
+  return <group position={position} scale={active && hover ? hoverScale : 1} onClick={active ? onClick : undefined}
+    onPointerOver={active ? (event) => {
+      if (yieldProjectHover && event.pointerType === "mouse" && window.matchMedia("(min-width: 768px)").matches
+        && event.intersections.some((hit) => hit.object.userData.projectGift)) return;
+      event.stopPropagation();
+      setHover(true);
+      onHover?.(event);
+    } : undefined}
+    onPointerOut={active ? () => { setHover(false); onHover?.(null); } : undefined}>{children}</group>;
 }
 
 function SoftBox({ position, size, radius, color, rotation = [0, 0, 0] }: {
@@ -969,7 +1019,7 @@ function SpriteCashier({ onProfile, active }: { onProfile: () => void; active: b
     texture.anisotropy = 8;
     texture.needsUpdate = true;
   }, [texture]);
-  return <Clickable position={[3.98, 0, -2.66]} active={active} onClick={(e) => {
+  return <Clickable position={[3.98, 0, -2.66]} active={active} yieldProjectHover onClick={(e) => {
     if (e.intersections.some((hit) => hit.object.userData.projectGift)) return;
     e.stopPropagation();
     onProfile();
@@ -986,7 +1036,7 @@ function SpriteCashier({ onProfile, active }: { onProfile: () => void; active: b
 
 function Checkout({ onCheckout, active }: { onCheckout: () => void; active: boolean }) {
   return <group position={[2.25, 0, -1.35]}>
-    <Clickable position={[0, 0.15, 0]} active={active} hoverScale={1.015} onClick={(e) => {
+    <Clickable position={[0, 0.15, 0]} active={active} hoverScale={1.015} yieldProjectHover onClick={(e) => {
       if (e.intersections.some((hit) => hit.object.userData.projectGift)) return;
       e.stopPropagation();
       onCheckout();
@@ -1015,7 +1065,7 @@ function CheckoutPlaceholder({ onCheckout, active }: { onCheckout: () => void; a
   </group>;
 }
 
-function Interior({ projects, onSelect, onCheckout, onProfile, active, fitRoom }: Pick<Props, "projects" | "onSelect" | "onCheckout" | "onProfile"> & { active: boolean; fitRoom: boolean }) {
+function Interior({ projects, onSelect, onProjectHover, onCheckout, onProfile, active, fitRoom }: Pick<Props, "projects" | "onSelect" | "onCheckout" | "onProfile"> & { onProjectHover: OnProjectHover; active: boolean; fitRoom: boolean }) {
   const { size, camera } = useThree();
   const extendedRoom = useRef<THREE.Group>(null);
   const mobileRoom = fitRoom && size.width <= 720;
@@ -1041,7 +1091,7 @@ function Interior({ projects, onSelect, onCheckout, onProfile, active, fitRoom }
     <InteriorStock position={[-1.77, 0.14, -1.65]} length={2.35} />
     <group visible={!mobileRoom}><InteriorStock position={[-1.77, 0.14, 0.55]} length={2.35} front /></group>
     <InteriorStock position={[0.15, 0.14, -3.36]} length={1.65} levels={2} />
-    <ProjectDisplay projects={projects} onSelect={onSelect} active={active} loadImages />
+    <ProjectDisplay projects={projects} onSelect={onSelect} onProjectHover={onProjectHover} active={active} loadImages />
     <Suspense fallback={null}><SpriteCashier onProfile={onProfile} active={active} /></Suspense>
     <Suspense fallback={<CheckoutPlaceholder onCheckout={onCheckout} active={active} />}><Checkout onCheckout={onCheckout} active={active} /></Suspense>
     <StoreLighting />
@@ -1282,7 +1332,7 @@ function ReadyFrame({ onReady, warm }: { onReady: () => void; warm?: boolean }) 
   return null;
 }
 
-function Scene(props: Props & { compact: boolean; onFrameReport?: (report: string) => void }) {
+function Scene(props: Props & { compact: boolean; onProjectHover: OnProjectHover; onFrameReport?: (report: string) => void }) {
   const entryProgress = useRef(0);
   const doorway = useMemo(() => new THREE.Group(), []);
   const spring = props.season === "spring";
@@ -1313,7 +1363,7 @@ function Scene(props: Props & { compact: boolean; onFrameReport?: (report: strin
       <EntryExterior mode={props.mode} entryProgress={entryProgress}>
       {winterOutside && <WinterSnowbanks />}<StreetProps spring={warmSeason} winter={winter} />
       </EntryExterior>
-      <Interior projects={props.projects} onSelect={props.onSelect} onCheckout={props.onCheckout} onProfile={props.onProfile} active={props.mode === "inside"} fitRoom={props.mode !== "outside"} />
+      <Interior projects={props.projects} onSelect={props.onSelect} onProjectHover={props.onProjectHover} onCheckout={props.onCheckout} onProfile={props.onProfile} active={props.mode === "inside"} fitRoom={props.mode !== "outside"} />
       <primitive object={doorway} dispose={null} />
       <EntryExterior mode={props.mode} entryProgress={entryProgress}>
       <Facade mode={props.mode} onEnter={props.onEnter} spring={warmSeason} springGlass={spring} rainy={summerRain} winter={winter} doorway={doorway} /><SpringExteriorWalls active={warmSeason && props.mode !== "inside"} autumn={autumn} /><Rooftop spring={warmSeason} winter={winter} autumn={autumn} /><SideAlley season={props.season} />
@@ -1329,6 +1379,7 @@ function Scene(props: Props & { compact: boolean; onFrameReport?: (report: strin
 }
 
 export default function RainyStoreScene(props: Props) {
+  const [projectHover, setProjectHover] = useState<ProjectHover | null>(null);
   const [compact, setCompact] = useState(() => window.matchMedia("(max-width: 720px)").matches);
   useEffect(() => {
     const query = window.matchMedia("(max-width: 720px)");
@@ -1347,8 +1398,11 @@ export default function RainyStoreScene(props: Props) {
     <Canvas className={baseline ? "entry-baseline-canvas" : undefined}
       camera={{ fov: 58, near: 0.1, far: 90, position: [0, 2.7, 23] }}
       dpr={[Math.min(1, maxDpr), maxDpr]} gl={{ antialias: true, powerPreference: "high-performance" }}>
-      <Scene {...props} compact={compact} onFrameReport={preview ? setFrameReport : undefined} />
+      <Scene {...props} compact={compact} onProjectHover={setProjectHover} onFrameReport={preview ? setFrameReport : undefined} />
     </Canvas>
+    {props.mode === "inside" && projectHover && <span className="project-hover-name" style={{ left: projectHover.x, top: projectHover.y }}>
+      {projectHover.project.title.replace(/^作品 \d+ · /, "")}
+    </span>}
     {preview && props.mode === "inside" && frameReport && <output className="entry-frame-report">{frameReport}</output>}
   </>;
 }
